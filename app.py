@@ -81,8 +81,9 @@ def validate_username(username):
             return True
 
 def validate_word_content(content):
-        existing_word_content = User.query.filter_by(content=content).first()
-        if existing_word_content:
+        existing_word_content = Word.query.filter_by(content=content).first()
+        existing_proposal_content = Proposal.query.filter_by(name=content).first()
+        if existing_word_content or existing_proposal_content:
             return True
 
 # home page
@@ -116,7 +117,8 @@ def login():
         if user:
             if bcrypt.check_password_hash(user.password, password):
                 session['show_log_out'] = True
-                session['username'] = username
+                session['username'] = user.username
+                session['role'] = user.role_id
                 login_user(user)
                 return redirect('/menu')
     else:
@@ -148,7 +150,7 @@ def admin_register():
 
 
 @app.route('/all_words', methods=['POST','GET'])
-def all_word():
+def all_words():
     return render_template('all_words.html')
 
 @app.route('/api/words_data')
@@ -166,9 +168,12 @@ def add_word():
         added_by = session['username']
         if validate_word_content(content):
             session['word_already_exists']=True
-            return render_template('admin_register.html')
+            return render_template('add_word.html')
         else:
-            new_word = Word(content=content, searched=searched, definition=definition, source=source, added_by=added_by)
+            if 1 == session['role']:
+                new_word = Word(content=content, searched=searched, definition=definition, source=source, added_by=added_by)
+            else:
+                new_word = Proposal(name=content, reasoning=definition, user=added_by)
             try:
                 db.session.add(new_word)
                 db.session.commit()
@@ -177,8 +182,15 @@ def add_word():
             except:
                 return 'There was an issue adding your test'
     else:
+        session['word_already_exists']=False
         return render_template('add_word.html')
 
+@app.route('/all_proposals')
+def proposals():
+    proposals = Proposal.query.order_by(Proposal.date).all()
+    print(len(proposals))
+    print(type(proposals))
+    return render_template('all_proposals.html', proposals=proposals)
 
 @app.route('/big_search', methods=['POST','GET'])
 def big_search():

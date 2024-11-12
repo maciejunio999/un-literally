@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<title>Un-Literally</title>
+<style>
+    .label-top-align {
+        vertical-align: top;
+        display: inline-block;
+        margin-top: 7px; /* Add space between the label and input */
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+
+<div class="name">
+    <h1 style="text-align: center; color: #297400; font-family: Arial; font-weight: bold;">Un-Literally</h1>
+    <h2 style="text-align: center; color: #297400; text-decoration: underline; font-family: Arial; font-weight: bold;">All Proposals</h2>
+</div>
+
+<div>
+    <hr>
+    <div class="container_row" style="margin-left: 100px; margin-right: 100px;">
+
+        {% if proposals|length < 1 %}
+            <h4 style="margin-left: 700px; ">There are no proposals to consider</h4>
+        {% else %}
+            <table>
+                <tr>
+                    <th style="color: #297400;">Proposal</th>
+                    <th style="color: #297400">Description</th>
+                    <th style="color: #297400">Date of creation</th>
+                    <th style="color: #297400">Actions</th>
+                </tr>
+                {% for proposal in proposals %}
+                    <tr>
+                        <td>{{ proposal.name }}</td>
+                        <td>{% if proposal.reasoning|length > 150 %}
+                                {{ proposal.reasoning[:150] + ' ...' }}
+                            {% else %}
+                                {{ proposal.reasoning }}
+                            {% endif %}
+                        </td>
+                        <td>{{ proposal.date.date() }}</td>
+                        <td>
+                            <a href="/show/proposal_{{proposal.id}}">Show</a>
+                            <br>
+                            <a href="/delete/proposal_{{proposal.id}}">Delete</a>
+                        </td>
+                {% endfor %}
+                </tr>
+            </table>
+        {% endif %}
+    </div>
+    
+    <div class="item">
+        <button class="back_button" onclick="window.location='/menu'" style="margin-left: 10px;">Back</button>
+    </div>
+</div>
+
+{% endblock %}

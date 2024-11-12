@@ -1,4 +1,4 @@
-from app import app, db, User, Word, Role
+from app import app, db, User, Word, Role, Proposal
 
 # DECORATORS
 def decorator(func):
@@ -13,6 +13,7 @@ def check_users():
     with app.app_context():
         for user in db.session.query(User):
             print("username: ", user.username)
+            print("role: ", user.role_id)
             print("password: ", user.password)
             print("="*20)
 
@@ -42,10 +43,23 @@ def chech_words():
 def check_roles():
     with app.app_context():
         for role in db.session.query(Role):
+            print("id: ", role.id)
             print("name: ", role.name)
             print("="*20)
 
+# FUNCTION TO CHECK FEW PROPOSALS IN DB
+@decorator
+def check_proposals():
+    with app.app_context():
+        for proposal in db.session.query(Proposal):
+            print('id: ', proposal.id)
+            print('name: ', proposal.name)
+            print('reasoning: ', proposal.reasoning)
+            print('user: ', proposal.user)
+            print('date: ', proposal.date)
+            print("="*20)
 
-check_users()
-chech_words()
-check_roles()
+#check_users()
+#chech_words()
+#check_roles()
+check_proposals()

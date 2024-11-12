@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+
+{% block head %}
+<title>Un-Literally</title>
+{% endblock %}
+
+
+{% block body %}
+
+<div class="name">
+    
+    <h1 style="text-align: center; color: #297400; font-family: Arial; font-weight: bold;">Un-Literally</h1>
+    <h2 style="text-align: center; color: #297400; text-decoration: underline; font-family: Arial; font-weight: bold;">Add new user</h2>
+
+</div>
+
+<div>
+
+    <hr>
+    
+    <form action="/admin_register" method="POST">
+        <div class="container_row">
+            <div class="item">
+                <label for="username">Username:</label>
+                <input type="text" name="username" id="username" class="login_input" placeholder="Username" required>
+                <br><br>
+                <label for="password">Password:</label>
+                <input type="password" name="password" id="password" minlength="5" class="login_input" style="margin-left: 18px;" placeholder="Password" required>
+                <br><br>
+                <label for="role">Role:</label>
+                <select name="role" id="role">
+                    <option value="ProUser">ProUser</option>
+                    <option value="PlainUser">PlainUser</option>
+                </select>
+                <br><br>
+                <input type="submit" value="Sign up" class="button">
+            </div>
+        </div>
+    </form>
+    
+    <div class="item">
+        <button class="back_button" onclick="window.location='/menu'" style="margin-left: 10px;">Back</button>
+    </div>
+
+    <div class="item" style="flex-grow: 2;">
+        {% if session.username_used %}
+            <p>Username already used</p>
+        {% endif %}
+    </div>
+        
+
+    <hr>
+
+</div>
+
+{% endblock %}

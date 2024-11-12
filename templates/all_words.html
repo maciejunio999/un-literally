@@ -1,0 +1,68 @@
+{% extends 'base2.html' %}
+
+{% block head %}
+<title>Un-Literally</title>
+<style>
+  table {
+    border-collapse: collapse; /* Ensure that borders don't collapse */
+    width: 100%; /* Full width of table */
+  }
+  
+  th, td {
+    text-align: left; /* Align table content to the left */
+    border: 1px solid #297400; /* Add visible vertical lines */
+    padding: 8px; /* Padding for readability */
+  }
+
+  th {
+    background-color: #f2f2f2; /* Slightly different background color for headers */
+  }
+</style>
+{% endblock %}
+
+
+{% block body %}
+<h1 style="text-align: center; color: #297400; font-family: Arial; font-weight: bold;">Un-Literally</h1>
+<h2 style="text-align: center; color: #297400; text-decoration: underline; font-family: Arial; font-weight: bold;">Words</h2>
+<button class="back_button" onclick="window.location='/menu'">Back</button>
+{% endblock %}
+
+{% block content %}
+  <table id="data" class="table table-striped">
+    <thead>
+      <tr>
+        <th>Content</th>
+        <th>Searched</th>
+        <th>Definition</th>
+        <th>Last search</th>
+        <th>LWD</th>
+        <th>LWL</th>
+        <th>Source</th>
+        <th>Added by</th>
+      </tr>
+    </thead>
+    <tbody>
+    </tbody>
+  </table>
+{% endblock %}
+
+{% block scripts %}
+  <script>
+    $(document).ready(function () {
+      $('#data').DataTable({
+        ajax: '/api/words_data',
+        dom: 'ltip',
+        columns: [
+          {data: 'content', orderable: false, searchable: false},
+          {data: 'searched', searchable: false},
+          {data: 'definition', orderable: false, searchable: false},
+          {data: 'last_search', orderable: false, searchable: false},
+          {data: 'last_as_word_of_the_day', orderable: false, searchable: false},
+          {data: 'last_as_word_of_literally', orderable: false, searchable: false},
+          {data: 'source', orderable: false, searchable: false},
+          {data: 'added_by', orderable: false, searchable: false}
+        ],
+      });
+    });
+  </script>
+{% endblock %}

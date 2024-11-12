@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block head %}
+    <title>Un-Literally</title>
+    <!-- Include Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+{% endblock %}
+
+{% block body %}
+<div class="menu_header">
+    <h1 style="text-align: center; color: #297400;">Un-Literally</h1>
+</div>
+
+<div class="login_name">
+    <button class="login_button" onclick="window.location='/login'">
+        <i class="fas fa-sign-in-alt"></i> Log in
+    </button>
+</div>
+{% endblock %}

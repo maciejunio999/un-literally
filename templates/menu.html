@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+
+{% block head %}
+    <title>Un-Literally</title>
+{% endblock %}
+
+
+{% block body %}
+
+<div class="menu_header">
+    <h1 style="text-align: center; color: #297400; font-family: Arial; font-weight: bold;">Un-Literally</h1>
+    <h2 style="text-align: center; color: #297400; text-decoration: underline; font-family: Arial; font-weight: bold;">Menu</h2>
+</div>
+
+<div class="name">
+    <hr>
+    <p>Words module</p>
+    <button class="menu_button" onclick="window.location='/big_search'">Big search</button>
+    <br><br>
+    <button class="menu_button" onclick="window.location='/add_word'">Add Word</button>
+    <br><br>
+    <button class="menu_button" onclick="window.location='/all_words'">All Words</button>
+    <br><br>
+    <button class="menu_button" onclick="window.location='/all_proposals'">All Proposals</button>
+    <hr>
+    <p>Users module</p>
+    <button class="menu_button" onclick="window.location='/all_users'">All Users</button>
+    <br><br>
+    <button class="menu_button" onclick="window.location='/admin_register'">Add User</button>
+    <hr>
+    <p>Aanalysis module</p>
+    <button class="menu_button" onclick="window.location='/add_word'">None</button>
+    <br><br>
+    <button class="menu_button" onclick="window.location='/add_word'">None</button>
+    <p>Extra module</p>
+    <button class="menu_button" onclick="window.location='/history'">History</button>
+    <hr>
+    <button class="back_button" onclick="window.location='/logout'">Log out</button>
+
+</div>
+
+</div>
+{% endblock %}

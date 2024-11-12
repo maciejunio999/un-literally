@@ -1,0 +1,177 @@
+body, html {
+    margin: 0;
+    font-family: sans-serif;
+    background-color: #FFFFFF;
+}
+
+.name {
+    margin: 0 auto;
+    width: 400px;
+}
+
+table, td, th {
+    border: 1px solid #5d1c75;
+}
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+th {
+    height: 30px;
+}
+
+td {
+    text-align: center;
+    padding: 5px;
+}
+
+.form {
+    margin-top: 20px;
+}
+
+#name {
+    width: 70%;
+}
+
+.name_style {
+    width: 300px;
+    height: 15px;
+    margin-top: 7px;
+    margin-left: 5px;
+}
+
+.description_style {
+    margin-top: 7px;
+    margin-left: 11px;
+    font-family: sans-serif;
+}
+
+.content_style {
+    margin-top: 7px;
+    margin-left: -100px;
+    font-family: sans-serif;
+}
+
+.d_date {
+    margin-top: 7px;
+    margin-left: 26px;
+    font-family: sans-serif;
+}
+
+.menu_button {
+    background-color: #297400;
+    border: none;
+    color: white;
+    padding: 10px 50px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 15px;
+    margin: 7px 0px;
+    cursor: pointer;
+  }
+
+.button {
+    background-color: #50932c;
+    border: none;
+    color: white;
+    padding: 10px 20px;
+    text-align: center;
+    display: inline-block;
+    font-size: 15px;
+    margin: 7px 0px;
+    cursor: pointer;
+  }
+
+  .back_button {
+    background-color: #2d5319;
+    border: none;
+    color: white;
+    padding: 10px 32px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 15px;
+    margin: 7px 0px 0px 0px;
+    cursor: pointer;
+  }
+
+
+  .login_button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 200px;
+    height: 200px;
+    border-radius: 85%;  /* make it circular */
+    background-color: #297400;
+    color: white;
+    font-size: 24px;
+    border: none;
+    cursor: pointer;
+}
+
+.login_button i {
+    margin-right: 10px;  /* space between icon and text */
+}
+
+.login_name {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 70vh;  /* center vertically */
+    margin-top: -150px; /* move up by 50px */
+}
+
+  .container_column {
+    background-color: #ffffff;
+    justify-content: flex-start;
+    display: flex;
+    margin-left: 10px;
+    margin-right: 10px;
+    flex-direction: column;
+    text-align: left;
+  }
+
+  .container_row {
+    background-color: #ffffff;
+    justify-content: flex-start;
+    align-items: baseline;
+    display: flex;
+    margin-left: 10px;
+    flex-direction: row;
+  }
+
+  .menu_header {
+    margin: 0 auto;
+    width: auto;
+}
+
+  .item {
+    margin-left: 25px;
+  }
+
+  .definition_input{
+    width: 300px;
+    height: 85px;
+    margin: 7px 0px 7px 15px;
+  }
+
+  .login_input{
+    width: 300px;
+    height: 17px;
+    margin: 7px 0px 7px 15px;
+  }
+
+  div.vertical-line{
+    width: 2px;
+    background-color: black;
+    height: 100%;
+    float: left;
+  }
+
+  textarea {
+    resize: none;
+  }

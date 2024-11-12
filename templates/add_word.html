@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<title>Un-Literally</title>
+<style>
+    .label-top-align {
+        vertical-align: top;
+        display: inline-block;
+        margin-top: 7px; /* Add space between the label and input */
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+
+<div class="name">
+    <h1 style="text-align: center; color: #297400; font-family: Arial; font-weight: bold;">Un-Literally</h1>
+    <h2 style="text-align: center; color: #297400; text-decoration: underline; font-family: Arial; font-weight: bold;">Add new user</h2>
+</div>
+
+<div>
+    <hr>
+    <form action="/add_word" method="POST">
+        <div class="container_row">
+            <div class="item">
+                <label for="content">Word:</label>
+                <input type="text" name="content" id="content" class="login_input" placeholder="Content... " required>
+                <br><br>
+                <label for="definition" class="label-top-align">Word's definition:</label>
+                <textarea id="definition" name="definition" rows="5" cols="50" maxlength="500" wrap="soft" placeholder="Definition..." style="margin-left: 10px;"></textarea>
+                <br><br>
+                <input type="submit" value="Add" class="button">
+            </div>
+        </div>
+    </form>
+    
+    <div class="item">
+        <button class="back_button" onclick="window.location='/menu'" style="margin-left: 10px;">Back</button>
+    </div>
+
+    <div class="item" style="flex-grow: 2;">
+        {% if session.word_already_exists %}
+            <p>Word already exists</p>
+        {% endif %}
+    </div>
+    <hr>
+</div>
+
+{% endblock %}

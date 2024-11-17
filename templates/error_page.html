@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<title>Un-Literally</title>
+<style>
+    .label-top-align {
+        vertical-align: top;
+        display: inline-block;
+        margin-top: 7px;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+
+<div class="name">
+    <h1 style="text-align: center; color: #297400; font-family: Arial; font-weight: bold;">Un-Literally</h1>
+    <h2 style="text-align: center; color: #297400; text-decoration: underline; font-family: Arial; font-weight: bold;">Add new word</h2>
+</div>
+
+<div>
+    <hr>
+
+    <h2 style="text-align: center; color: #ff0000;">Error</h2>
+
+    <p style=' margin-left: 10px;' >{{ message }}</p>
+
+    <hr>
+    
+    <button style=' margin-left: 10px;' class="menu_button" onclick="window.location='/menu'">Menu</button>
+
+    <hr>
+</div>
+
+{% endblock %}

@@ -126,6 +126,7 @@ def login():
 
 # register page
 @app.route('/admin_register', methods=['POST', 'GET'])
+@login_required
 def admin_register():
     if request.method == 'POST':
         username = request.form['username'].strip()
@@ -150,15 +151,18 @@ def admin_register():
 
 
 @app.route('/all_words', methods=['POST','GET'])
+@login_required
 def all_words():
     return render_template('all_words.html')
 
 @app.route('/api/words_data')
+@login_required
 def words_data():
     return {'data': [word.to_dict() for word in Word.query]}
 
 
 @app.route('/add_word', methods=['POST','GET'])
+@login_required
 def add_word():
     if request.method == 'POST':
         content = request.form['content'].strip()
@@ -186,24 +190,49 @@ def add_word():
         return render_template('add_word.html')
 
 @app.route('/all_proposals')
+@login_required
 def proposals():
     proposals = Proposal.query.order_by(Proposal.date).all()
     return render_template('all_proposals.html', proposals=proposals)
 
+@app.route('/delete/proposal_<int:id>')
+@login_required
+def delete_proposal(id):
+    if current_user.role_id != 2:
+        proposal_to_delete = Proposal.query.get_or_404(id)
+        try:
+            db.session.delete(proposal_to_delete)
+            db.session.commit()
+            proposals = Proposal.query.all()
+            if len(proposals) > 0:
+                return redirect('/all_proposals')
+            else:
+                return redirect('/menu')
+        except:
+            return render_template('error_page.html', message="[?] There was an issue deleting that proposal")
+    else:
+        return render_template('error_page.html', message='[!] You do not have permission to delete proposals')
 
 @app.route('/show/proposal_<int:id>')
+@login_required
 def show_proposal(id):
     proposal_to_show = Proposal.query.get_or_404(id)
     return render_template('show_proposal.html', proposal=proposal_to_show)
 
 @app.route('/big_search', methods=['POST','GET'])
+@login_required
 def big_search():
     return render_template('big_search.html')
 
-
 @app.route('/all_users', methods=['POST','GET'])
+@login_required
 def all_users():
-    return render_template('all_users.html')
+    users = User.query.order_by(User.username).all()
+    if current_user.role_id == 1:
+        x = current_user.role_id
+        return render_template('all_users.html', users=users, id=x)
+
+
 
 
 if __name__ == "__main__":

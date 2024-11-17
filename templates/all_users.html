@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<title>Un-Literally</title>
+<style>
+    .label-top-align {
+        vertical-align: top;
+        display: inline-block;
+        margin-top: 7px;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+
+<div class="name">
+    <h1 style="text-align: center; color: #297400; font-family: Arial; font-weight: bold;">Un-Literally</h1>
+    <h2 style="text-align: center; color: #297400; text-decoration: underline; font-family: Arial; font-weight: bold;">All Proposals</h2>
+</div>
+
+<div>
+    <hr>
+    <div class="container_row">
+
+        {% if users|length < 1 %}
+            <h4 style="text-align: center;">There are no users in this app</h4>
+        {% else %}
+            <table>
+                <tr>
+                    <th>Username</th>
+                    <th>Role</th>
+                    <th>Actions</th>
+                </tr>
+                {% for user in users %}
+                    <tr>
+                        <td>{{ user.username }}</td>
+                        <td>{{ user.role_id }}</td>
+                        <td>
+                            {% if user.id != id %}
+                                <a href="/delete/user_{{user.id}}">Delete</a>
+                                <br>
+                            {% endif %}
+                            <a href="/update/user_{{user.id}}">Update</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </table>
+        {% endif %}
+    </div>
+
+</div>
+
+<div class="container_column">
+    <button class="back_button" onclick="window.location='/menu'" style="margin-left: 10px;">Back</button>
+</div>
+
+{% endblock %}

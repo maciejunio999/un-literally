@@ -21,33 +21,34 @@
 <div>
     <hr>
     <form action="/add_word" method="POST">
-        <div class="container_row">
-            <div class="item">
-                <label for="content">Word:</label>
-                <input type="text" name="content" id="content" class="login_input" placeholder="Content... " required>
-                <br><br>
-                {% if session.role == 1 %}
-                    <label for="definition" class="label-top-align">Word's definition:</label>
-                    <textarea id="definition" name="definition" rows="5" cols="50" maxlength="500" wrap="soft" placeholder="Definition..." style="margin-left: 10px;"></textarea>
-                {% else %}
-                    <label for="definition" class="label-top-align">Reasoning behind proposal:</label>
-                    <textarea id="definition" name="definition" rows="5" cols="50" maxlength="500" wrap="soft" placeholder="Explanation..." style="margin-left: 10px;"></textarea>
-                {% endif %}
-                <br><br>
-                <input type="submit" value="Add" class="button">
+        <div class="container_column">
+            <label for="content" class="label-top-align">Word:</label>
+            <input type="text" name="content" id="content" class="login_input" placeholder="Content... " required>
+            <br><br>
+            {% if session.role == 1 %}
+                <label for="definition" class="label-top-align">Word's definition:</label>
+                <textarea id="definition" name="definition" rows="5" cols="50" maxlength="500" wrap="soft" placeholder="Definition..." class="text-area" style="resize: none;"></textarea>
+            {% else %}
+                <label for="definition" class="label-top-align">Reasoning behind proposal:</label>
+                <textarea id="definition" name="definition" rows="5" cols="50" maxlength="500" wrap="soft" placeholder="Explanation..." class="text-area" style="resize: none;"></textarea>
+            {% endif %}
+            <br><br>
+            <div class="button-container">
+                <input type="submit" value="Add" class="button accept_button button-large">
             </div>
         </div>
     </form>
     
-    <div class="item">
-        <button class="back_button" onclick="window.location='/menu'" style="margin-left: 10px;">Back</button>
-    </div>
-
     <div class="item" style="flex-grow: 2;">
         {% if session.word_already_exists %}
             <p style="color: red;">Word already exists or already was proposed and waits for acceptation.</p>
         {% endif %}
     </div>
+
+    <div class="container_column">
+        <button class="back_button" onclick="window.location='/menu'">Back</button>
+    </div>
+
     <hr>
 </div>
 

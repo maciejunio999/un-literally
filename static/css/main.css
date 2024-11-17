@@ -1,177 +1,293 @@
 body, html {
-    margin: 0;
-    font-family: sans-serif;
-    background-color: #FFFFFF;
+  margin: 0;
+  font-family: sans-serif;
+  background-color: #FFFFFF;
 }
 
 .name {
-    margin: 0 auto;
-    width: 400px;
-}
-
-table, td, th {
-    border: 1px solid #5d1c75;
+  margin: 0 auto;
+  width: 400px;
 }
 
 table {
-    border-collapse: collapse;
-    width: 100%;
+  border-collapse: collapse;
+  width: 80%; /* Adjust the width to make the table not too wide */
+  margin: auto; /* Center the table within its container */
+  border: 1px solid #5d1c75;
+}
+
+th, td {
+  padding: 10px;
+  text-align: center;
+  border: 1px solid #5d1c75; /* Keep table borders visible */
 }
 
 th {
-    height: 30px;
-}
-
-td {
-    text-align: center;
-    padding: 5px;
+  background-color: #e0e0e0; /* Light grey to match previous header style */
+  color: #297400; /* Green color for the header text */
 }
 
 .form {
-    margin-top: 20px;
+  margin-top: 20px;
 }
 
 #name {
-    width: 70%;
+  width: 70%;
 }
 
 .name_style {
-    width: 300px;
-    height: 15px;
-    margin-top: 7px;
-    margin-left: 5px;
+  width: 300px;
+  height: 15px;
+  margin-top: 7px;
+  margin-left: 5px;
 }
 
 .description_style {
-    margin-top: 7px;
-    margin-left: 11px;
-    font-family: sans-serif;
+  margin-top: 7px;
+  margin-left: 11px;
+  font-family: sans-serif;
 }
 
 .content_style {
-    margin-top: 7px;
-    margin-left: -100px;
-    font-family: sans-serif;
+  margin-top: 7px;
+  margin-left: -100px;
+  font-family: sans-serif;
 }
 
 .d_date {
-    margin-top: 7px;
-    margin-left: 26px;
-    font-family: sans-serif;
+  margin-top: 7px;
+  margin-left: 26px;
+  font-family: sans-serif;
 }
 
 .menu_button {
-    background-color: #297400;
-    border: none;
-    color: white;
-    padding: 10px 50px;
-    text-align: center;
-    text-decoration: none;
-    display: inline-block;
-    font-size: 15px;
-    margin: 7px 0px;
-    cursor: pointer;
-  }
+  background-color: #297400;
+  border: none;
+  color: white;
+  padding: 10px 50px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 15px;
+  margin: 7px 0px;
+  cursor: pointer;
+}
 
 .button {
-    background-color: #50932c;
-    border: none;
-    color: white;
-    padding: 10px 20px;
-    text-align: center;
-    display: inline-block;
-    font-size: 15px;
-    margin: 7px 0px;
-    cursor: pointer;
-  }
+  background-color: #50932c;
+  border: none;
+  color: white;
+  padding: 10px 20px;
+  text-align: center;
+  display: inline-block;
+  font-size: 15px;
+  margin: 7px 0px;
+  cursor: pointer;
+}
 
-  .back_button {
-    background-color: #2d5319;
-    border: none;
-    color: white;
-    padding: 10px 32px;
-    text-align: center;
-    text-decoration: none;
-    display: inline-block;
-    font-size: 15px;
-    margin: 7px 0px 0px 0px;
-    cursor: pointer;
-  }
+.button:hover {
+  background-color: #2b8b00;
+}
 
+.back_button {
+  background-color: #2d5319;
+  border: none;
+  color: white;
+  padding: 10px 32px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 15px;
+  margin: 7px 0px 0px 0px;
+  cursor: pointer;
+}
 
-  .login_button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 200px;
-    height: 200px;
-    border-radius: 85%;  /* make it circular */
-    background-color: #297400;
-    color: white;
-    font-size: 24px;
-    border: none;
-    cursor: pointer;
+.login_button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 200px;
+  height: 200px;
+  border-radius: 85%;  /* make it circular */
+  background-color: #297400;
+  color: white;
+  font-size: 24px;
+  border: none;
+  cursor: pointer;
 }
 
 .login_button i {
-    margin-right: 10px;  /* space between icon and text */
+  margin-right: 10px;  /* space between icon and text */
 }
 
 .login_name {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 70vh;  /* center vertically */
-    margin-top: -150px; /* move up by 50px */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 70vh;  /* center vertically */
+  margin-top: -150px; /* move up by 50px */
 }
 
+.container_column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  margin: auto;
+  max-width: 1000px;
+  width: 90%;
+  box-sizing: border-box;
+}
+
+.container_row {
+  display: flex;
+  justify-content: center; /* Make the table centered horizontally */
+  align-items: center;
+  width: 100%;
+  margin: auto;
+}
+
+.text-area-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.text-area-container label {
+  margin-bottom: 10px;
+  font-size: 17px;
+  color: #297400;
+  text-align: left;
+}
+
+textarea {
+  width: 100%;
+  padding: 10px;
+  box-sizing: border-box;
+  resize: none;
+}
+
+.definition_input {
+  width: 300px;
+  height: 85px;
+  margin: 7px 0px 7px 15px;
+}
+
+.login_input {
+  width: 300px;
+  height: 17px;
+  margin: 7px 0px 7px 15px;
+}
+
+div.vertical-line {
+  width: 2px;
+  background-color: black;
+  height: 100%;
+  float: left;
+}
+
+.button-container {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  width: 100%;
+  margin-top: 20px;
+}
+
+button {
+  padding: 10px 20px;
+  font-size: 16px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+button:hover {
+  background-color: #2b8b00;
+}
+
+button,
+input[type="submit"] {
+    padding: 15px 40px;
+    font-size: 18px;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.accept_button, .back_button_v2 {
+  padding: 10px 20px;
+  font-size: 16px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.back_button_v2 {
+  background-color: #297400;
+  color: white;
+}
+
+.accept_button {
+  background-color: #56c30d;
+  color: white;
+}
+
+.back_button_v2:hover, .accept_button:hover {
+  background-color: #3e751b;
+}
+
+@media (max-width: 600px) {
   .container_column {
-    background-color: #ffffff;
-    justify-content: flex-start;
-    display: flex;
-    margin-left: 10px;
-    margin-right: 10px;
-    flex-direction: column;
-    text-align: left;
+      padding: 10px;
+      width: 100%;
   }
 
-  .container_row {
-    background-color: #ffffff;
-    justify-content: flex-start;
-    align-items: baseline;
-    display: flex;
-    margin-left: 10px;
-    flex-direction: row;
+  .container_row p {
+      font-size: 15px;
   }
 
-  .menu_header {
-    margin: 0 auto;
-    width: auto;
+  .button {
+      padding: 8px 16px;
+      font-size: 14px;
+  }
+
+  .text-area-container textarea {
+      width: 100%;
+  }
+
+  .login_input, .definition_input {
+      width: 90%;
+  }
 }
 
-  .item {
-    margin-left: 25px;
-  }
+.info_block {
+  background-color: #f0f0f0; /* Light gray background for each info block */
+  padding: 15px;
+  border-radius: 10px;
+  margin-bottom: 20px; /* Spacing between info blocks */
+  width: 100%; /* Full width of the container */
+  box-sizing: border-box; /* Make sure padding doesn't exceed container width */
+}
 
-  .definition_input{
-    width: 300px;
-    height: 85px;
-    margin: 7px 0px 7px 15px;
-  }
+.info_label {
+  color: #297400;
+  font-size: 17px;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
 
-  .login_input{
-    width: 300px;
-    height: 17px;
-    margin: 7px 0px 7px 15px;
-  }
+.info_value {
+  font-size: 17px;
+  margin-left: 10px;
+}
 
-  div.vertical-line{
-    width: 2px;
-    background-color: black;
-    height: 100%;
-    float: left;
-  }
-
-  textarea {
-    resize: none;
-  }
+.description_area {
+  width: 100%;
+  padding: 10px;
+  box-sizing: border-box; /* Ensure padding is included in the element's width */
+  resize: none;
+  background-color: #ffffff;
+  border-radius: 10px;
+  border: 1px solid #cccccc;
+}

@@ -20,17 +20,17 @@
 
 <div>
     <hr>
-    <div class="container_row" style="margin-left: 100px; margin-right: 100px;">
+    <div class="container_row">
 
         {% if proposals|length < 1 %}
-            <h4 style="margin-left: 700px; ">There are no proposals to consider</h4>
+            <h4 style="text-align: center;">There are no proposals to consider</h4>
         {% else %}
             <table>
                 <tr>
-                    <th style="color: #297400;">Proposal</th>
-                    <th style="color: #297400">Description</th>
-                    <th style="color: #297400">Date of creation</th>
-                    <th style="color: #297400">Actions</th>
+                    <th>Proposal</th>
+                    <th>Description</th>
+                    <th>Date of creation</th>
+                    <th>Actions</th>
                 </tr>
                 {% for proposal in proposals %}
                     <tr>
@@ -47,15 +47,16 @@
                             <br>
                             <a href="/delete/proposal_{{proposal.id}}">Delete</a>
                         </td>
+                    </tr>
                 {% endfor %}
-                </tr>
             </table>
         {% endif %}
     </div>
-    
-    <div class="item">
-        <button class="back_button" onclick="window.location='/menu'" style="margin-left: 10px;">Back</button>
-    </div>
+
+</div>
+
+<div class="container_column">
+    <button class="back_button" onclick="window.location='/menu'" style="margin-left: 10px;">Back</button>
 </div>
 
 {% endblock %}

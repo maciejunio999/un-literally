@@ -188,9 +188,13 @@ def add_word():
 @app.route('/all_proposals')
 def proposals():
     proposals = Proposal.query.order_by(Proposal.date).all()
-    print(len(proposals))
-    print(type(proposals))
     return render_template('all_proposals.html', proposals=proposals)
+
+
+@app.route('/show/proposal_<int:id>')
+def show_proposal(id):
+    proposal_to_show = Proposal.query.get_or_404(id)
+    return render_template('show_proposal.html', proposal=proposal_to_show)
 
 @app.route('/big_search', methods=['POST','GET'])
 def big_search():

@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<title>Test Master</title>
+{% endblock %}
+
+{% block body %}
+<div class="container_column">
+
+    <h1 style="color: #297400; font-size: 25px;">Selected word proposal</h1>
+
+    <div class="info_block">
+        <p class="info_label">Proposed word:</p>
+        <p class="info_value">{{proposal.name}}</p>
+    </div>
+
+    <div class="info_block">
+        <p class="info_label">Date:</p>
+        <p class="info_value">{{proposal.date.strftime("%d %B %Y %H:%M")}}</p>
+    </div>
+
+    <div class="info_block">
+        <p class="info_label">Reporter:</p>
+        <p class="info_value">{{proposal.user}}</p>
+    </div>
+
+    <div class="info_block">
+        <p class="info_label">Description:</p>
+        <textarea id="content" name="content" rows="15" cols="150" class="description_area" disabled>{{proposal.reasoning}}</textarea>
+    </div>
+
+    <div class="button-container">
+        <form action="/admin_register" method="POST">
+            <button type="submit" class="accept_button">Accept</button>
+        </form>
+        <button class="back_button_v2" onclick="window.location='/all_proposals'">Back</button>
+    </div>
+</div>
+{% endblock %}

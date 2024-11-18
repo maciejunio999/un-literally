@@ -27,6 +27,10 @@ def load_user(user_id):
     return User.query.get(user_id)
 
 
+###################################################################################################################################
+#   Database - data schema classes
+###################################################################################################################################
+
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), nullable=False, unique=True)
@@ -74,17 +78,29 @@ class History(db.Model):
     action = db.Column(db.String(5000), nullable=False)
     user = db.Column(db.String(50), nullable=False)
 
-# VALIDATORS
+
+###################################################################################################################################
+#   Validators
+###################################################################################################################################
+
+# validate occupation of username
 def validate_username(username):
         existing_user_username = User.query.filter_by(username=username).first()
         if existing_user_username:
             return True
 
+
+# validate if such proposition exists in database Word or Proposal columns
 def validate_word_content(content):
         existing_word_content = Word.query.filter_by(content=content).first()
         existing_proposal_content = Proposal.query.filter_by(name=content).first()
         if existing_word_content or existing_proposal_content:
             return True
+
+
+###################################################################################################################################
+#   Main pages
+###################################################################################################################################
 
 # home page
 @app.route('/', methods=['POST', 'GET'])
@@ -93,13 +109,13 @@ def home():
 
 
 # menu page
-@app.route('/menu', methods=['POST', 'GET'])
+@app.route('/menu', methods=['GET'])
 @login_required
 def menu():
     return render_template('menu.html')
 
 
-@app.route('/logout', methods=['GET', 'POST'])
+@app.route('/logout', methods=['GET'])
 @login_required
 def logout():
     logout_user()
@@ -121,46 +137,79 @@ def login():
                 session['role'] = user.role_id
                 login_user(user)
                 return redirect('/menu')
+            else:
+                return render_template('login.html', y=True, x=False)
+        else:
+            return render_template('login.html', x=True, y=False)
     else:
-        return render_template('login.html')
+        return render_template('login.html', x=False, y=False)
+
+
+###################################################################################################################################
+#   Users module
+###################################################################################################################################
 
 # register page
 @app.route('/admin_register', methods=['POST', 'GET'])
 @login_required
 def admin_register():
-    if request.method == 'POST':
-        username = request.form['username'].strip()
-        password = request.form['password'].strip()
-        role_name = request.form['role'].strip()
-        if validate_username(username):
-            session['username_used']=True
-            return render_template('admin_register.html')
+    if current_user.role_id != 2:
+        if request.method == 'POST':
+            username = request.form['username'].strip()
+            password = request.form['password'].strip()
+            role_name = request.form['role'].strip()
+            if validate_username(username):
+                session['username_used']=True
+                return render_template('admin_register.html')
+            else:
+                hashed_password = bcrypt.generate_password_hash(password)
+                role = Role.query.filter_by(name=role_name).first()
+                new_user = User(username=username, password=hashed_password, role=role)
+                try:
+                    db.session.add(new_user)
+                    db.session.commit()
+                    session['username_used']=False
+                    return redirect('/menu')
+                except:
+                    return render_template('error_page.html', message="[?] There was an issue adding new user")
         else:
-            hashed_password = bcrypt.generate_password_hash(password)
-            role = Role.query.filter_by(name=role_name).first()
-            new_user = User(username=username, password=hashed_password, role=role)
-            try:
-                db.session.add(new_user)
-                db.session.commit()
-                session['username_used']=False
-                return redirect('/menu')
-            except:
-                return 'There was an issue adding your test'
+            return render_template('admin_register.html', show_hidden=False)
     else:
-        return render_template('admin_register.html', show_hidden=False)
+        return render_template('error_page.html', message="[!] You dont have permission to add new users")
 
 
+# page to show list of all users
+@app.route('/all_users', methods=['POST','GET'])
+@login_required
+def all_users():
+    if current_user.role_id != 2:
+        users = User.query.order_by(User.username).all()
+        if current_user.role_id == 1:
+            x = current_user.role_id
+            return render_template('all_users.html', users=users, id=x)
+
+
+###################################################################################################################################
+#   Words module
+###################################################################################################################################
+
+# WORDS
+
+# page to show list of all words
 @app.route('/all_words', methods=['POST','GET'])
 @login_required
 def all_words():
     return render_template('all_words.html')
 
+
+# get data for all_words page
 @app.route('/api/words_data')
 @login_required
 def words_data():
     return {'data': [word.to_dict() for word in Word.query]}
 
 
+# page to add new word to database
 @app.route('/add_word', methods=['POST','GET'])
 @login_required
 def add_word():
@@ -189,11 +238,14 @@ def add_word():
         session['word_already_exists']=False
         return render_template('add_word.html')
 
+# PROPOSALS
+
 @app.route('/all_proposals')
 @login_required
 def proposals():
     proposals = Proposal.query.order_by(Proposal.date).all()
     return render_template('all_proposals.html', proposals=proposals)
+
 
 @app.route('/delete/proposal_<int:id>')
 @login_required
@@ -213,24 +265,46 @@ def delete_proposal(id):
     else:
         return render_template('error_page.html', message='[!] You do not have permission to delete proposals')
 
+
 @app.route('/show/proposal_<int:id>')
 @login_required
 def show_proposal(id):
     proposal_to_show = Proposal.query.get_or_404(id)
     return render_template('show_proposal.html', proposal=proposal_to_show)
 
+
+@app.route('/accept_proposal_<int:id>', methods=['POST','GET'])
+@login_required
+def accept_proposal(id):
+    if current_user.role_id != 2:
+        proposal_to_delete = Proposal.query.get_or_404(id)
+        content = proposal_to_delete.name
+        searched = 0
+        definition = proposal_to_delete.reasoning
+        source = "Added by user, accepted by one of admins"
+        added_by = proposal_to_delete.user
+        new_word = Word(content=content, searched=searched, definition=definition, source=source, added_by=added_by)
+        try:
+            db.session.delete(proposal_to_delete)
+            db.session.add(new_word)
+            db.session.commit()
+            proposals = Proposal.query.all()
+            if len(proposals) > 0:
+                return redirect('/all_proposals')
+            else:
+                return redirect('/menu')
+        except:
+            return render_template('error_page.html', message="[?] There was an issue deleting that proposal")
+    else:
+        return render_template('error_page.html', message='[!] You do not have permission to accept proposals')
+
+
 @app.route('/big_search', methods=['POST','GET'])
 @login_required
 def big_search():
     return render_template('big_search.html')
 
-@app.route('/all_users', methods=['POST','GET'])
-@login_required
-def all_users():
-    users = User.query.order_by(User.username).all()
-    if current_user.role_id == 1:
-        x = current_user.role_id
-        return render_template('all_users.html', users=users, id=x)
+
 
 
 

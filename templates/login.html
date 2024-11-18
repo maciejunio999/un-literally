@@ -94,6 +94,11 @@
                 <input type="submit" value="Log in" class="button">
                 <button type="button" class="back_button" onclick="window.location='/'">Back</button>
             </div>
+            {% if x %}
+                <p style="text-align: center;color: red;">Wrong login</p>
+            {% elif y %}
+                <p style="text-align: center;color: red;">Wrong password</p>
+            {% endif %}
         </form>
     </div>
 </div>

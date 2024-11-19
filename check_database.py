@@ -61,5 +61,5 @@ def check_proposals():
 
 #check_users()
 #chech_words()
-#check_roles()
-check_proposals()
+check_roles()
+#check_proposals()

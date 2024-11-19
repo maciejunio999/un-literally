@@ -153,7 +153,7 @@ def login():
 @app.route('/admin_register', methods=['POST', 'GET'])
 @login_required
 def admin_register():
-    if current_user.role_id != 2:
+    if 1 == current_user.role_id:
         if request.method == 'POST':
             username = request.form['username'].strip()
             password = request.form['password'].strip()
@@ -182,11 +182,70 @@ def admin_register():
 @app.route('/all_users', methods=['POST','GET'])
 @login_required
 def all_users():
-    if current_user.role_id != 2:
+    if 1 == current_user.role_id:
         users = User.query.order_by(User.username).all()
-        if current_user.role_id == 1:
-            x = current_user.role_id
-            return render_template('all_users.html', users=users, id=x)
+        x = current_user.id
+        return render_template('all_users.html', users=users, id=x)
+    else:
+        return render_template('error_page.html', message="[!] You dont have permission to add new users")
+
+
+@app.route('/update/user_<int:id>', methods=['GET', 'POST'])
+@login_required
+def update_user(id):
+    if 1 == current_user.role_id:
+        user_to_update = User.query.get_or_404(id)
+        if request.method == 'POST':
+            username = request.form['username'].strip()
+            role_id = int(request.form['role'].strip())
+            new_password = request.form['password'].strip()
+
+            # Walidacja nazwy użytkownika
+            if username != user_to_update.username:
+                validate_name = validate_username(username)
+                if validate_name:
+                    session['repited_user'] = True
+                    return render_template('edit_user.html', user=user_to_update, message='[!] This username is already taken.')
+
+            user_to_update.username = username
+            user_to_update.role_id = role_id
+            if new_password:
+                new_password_hashed = bcrypt.generate_password_hash(new_password)
+                user_to_update.password = new_password_hashed
+
+            try:
+                db.session.commit()
+                session['repited_user'] = False
+                return redirect('/all_users')
+            except Exception as e:
+                return render_template('error_page.html', message=f"[?] There was an issue updating that user: {str(e)}")
+        else:
+            return render_template('edit_user.html', user=user_to_update)
+    else:
+        return render_template('error_page.html', message='[!] You do not have permission to edit users.')
+
+
+# page where we delete user from database
+@app.route('/delete/user_<int:id>')
+@login_required
+def delete_user(id):
+    if current_user.id != id:
+        if 1 == current_user.role_id:
+            user_to_delete = User.query.get_or_404(id)
+            try:
+                db.session.delete(user_to_delete)
+                db.session.commit()
+                users = User.query.all()
+                if len(users) > 0:
+                    return redirect('/all_users')
+                else:
+                    return redirect('/menu')
+            except:
+                return render_template('error_page.html', message="[?] There was an issue deleting that user")
+        else:
+            return render_template('error_page.html', message='[!] You do not have permission to delete users')
+    else:
+        return render_template('error_page.html', message='[!] You cannot delete own user')
 
 
 ###################################################################################################################################
@@ -250,7 +309,7 @@ def proposals():
 @app.route('/delete/proposal_<int:id>')
 @login_required
 def delete_proposal(id):
-    if current_user.role_id != 2:
+    if 1 == current_user.role_id:
         proposal_to_delete = Proposal.query.get_or_404(id)
         try:
             db.session.delete(proposal_to_delete)
@@ -276,7 +335,7 @@ def show_proposal(id):
 @app.route('/accept_proposal_<int:id>', methods=['POST','GET'])
 @login_required
 def accept_proposal(id):
-    if current_user.role_id != 2:
+    if 1 == current_user.role_id:
         proposal_to_delete = Proposal.query.get_or_404(id)
         content = proposal_to_delete.name
         searched = 0

@@ -37,10 +37,12 @@
                         <td>{{ user.role_id }}</td>
                         <td>
                             {% if user.id != id %}
-                                <a href="/delete/user_{{user.id}}">Delete</a>
-                                <br>
-                            {% endif %}
+                            <a href="/delete/user_{{user.id}}">Delete</a>
+                            <br>
                             <a href="/update/user_{{user.id}}">Update</a>
+                            {% else %}
+                                <p>You cannot work on Your own user</p>
+                            {% endif %}
                         </td>
                     </tr>
                 {% endfor %}

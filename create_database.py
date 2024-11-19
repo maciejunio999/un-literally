@@ -46,7 +46,7 @@ def find_all(file_name, path):
 @decorator
 def create_database(database_name=NAME):
     l = find_all(database_name, "web/instance")
-    admin = User(id=0, username='admin', password=bcrypt.generate_password_hash('admin'))
+    admin = User(id=0, username='admin', password=bcrypt.generate_password_hash('admin'), role_id=1)
 
     if len(l) == 0:
         try:
@@ -83,7 +83,7 @@ def add_words():
 # ADD USED ROLES
 @decorator
 def add_roles():
-    all_roles = ["ProUser", "PlainUser"]
+    all_roles = ["Admin", "ProUser", "PlainUser"]
     try:
         with app.app_context():
             session = db.session

@@ -59,7 +59,7 @@ def check_proposals():
             print('date: ', proposal.date)
             print("="*20)
 
-#check_users()
+check_users()
 #chech_words()
 check_roles()
 #check_proposals()

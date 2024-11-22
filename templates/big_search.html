@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<title>Un-Literally</title>
+<style>
+    .label-top-align {
+        vertical-align: top;
+        display: inline-block;
+        margin-top: 7px;
+    }
+
+    .toggle-container {
+        position: relative;
+        background-color: #f0f0f0;
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        text-align: left;
+        width: 60%;
+        margin: 20px auto;
+    }
+
+    .close-btn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background-color: #e74c3c;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        cursor: pointer;
+        font-weight: bold;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 16px;
+    }
+
+    .button-container {
+        text-align: center;
+        margin: 15px 0;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+
+<div class="name">
+    <h1 style="text-align: center; color: #297400; font-family: Arial; font-weight: bold;">Un-Literally</h1>
+    <h2 style="text-align: center; color: #297400; text-decoration: underline; font-family: Arial; font-weight: bold;">Big search</h2>
+</div>
+
+<div>
+    <hr>
+    <div class="button-container">
+        <button class="button" onclick="toggleField('lettersWordInclude')">Letters word include filter</button>
+    </div>
+    <div id="lettersWordInclude" class="toggle-container" style="display: none;">
+        <label for="includeFilter">Filter:</label>
+        <input type="text" name="includeFilter" id="includeFilter" class="login_input" placeholder="Enter letters..." required>
+        <button class="close-btn" onclick="closeField('lettersWordInclude')">X</button>
+    </div>
+
+    <div class="button-container">
+        <button class="button" onclick="toggleField('lettersNotInWord')">Letters not in word filter</button>
+    </div>
+    <div id="lettersNotInWord" class="toggle-container" style="display: none;">
+        <label for="notInWordFilter">Filter:</label>
+        <input type="text" name="notInWordFilter" id="notInWordFilter" class="login_input" placeholder="Enter letters..." required>
+        <button class="close-btn" onclick="closeField('lettersNotInWord')">X</button>
+    </div>
+
+    <div class="button-container">
+        <button class="button" onclick="toggleField('lettersOnPlace')">Letters exactly on place word filter</button>
+    </div>
+    <div id="lettersOnPlace" class="toggle-container" style="display: none;">
+        <label for="exactPlaceFilter">Filter:</label>
+        <input type="text" name="exactPlaceFilter" id="exactPlaceFilter" class="login_input" placeholder="Enter letters..." required>
+        <button class="close-btn" onclick="closeField('lettersOnPlace')">X</button>
+    </div>
+
+    <div class="button-container">
+        <input type="submit" value="Get data" class="accept_button button-large">
+    </div>
+
+    <div class="button-container">
+        <button class="back_button" onclick="window.location='/menu'">Back</button>
+    </div>
+    <hr>
+</div>
+
+<script>
+    function toggleField(fieldId) {
+        const field = document.getElementById(fieldId);
+        if (field.style.display === "none") {
+            field.style.display = "block";
+        } else {
+            field.style.display = "none";
+        }
+    }
+
+    function closeField(fieldId) {
+        const field = document.getElementById(fieldId);
+        field.style.display = "none";
+    }
+</script>
+
+{% endblock %}

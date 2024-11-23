@@ -358,10 +358,44 @@ def accept_proposal(id):
         return render_template('error_page.html', message='[!] You do not have permission to accept proposals')
 
 
-@app.route('/big_search', methods=['POST','GET'])
+@app.route('/big_search', methods=['POST', 'GET'])
 @login_required
 def big_search():
+    if request.method == 'POST':
+        include_filter = request.form.get('includeFilter', '').lower()
+        not_in_word_filter = request.form.get('notInWordFilter', '').lower()
+        exact_place_filters = [
+            request.form.get('exactPlaceFilter1', '').lower(),
+            request.form.get('exactPlaceFilter2', '').lower(),
+            request.form.get('exactPlaceFilter3', '').lower(),
+            request.form.get('exactPlaceFilter4', '').lower(),
+            request.form.get('exactPlaceFilter5', '').lower()
+        ]
+
+        query = Word.query
+        print('===')
+
+        if include_filter:
+            for letter in include_filter:
+                query = query.filter(Word.content.ilike(f'%{letter}%'))
+
+        if not_in_word_filter:
+            for letter in not_in_word_filter:
+                query = query.filter(~Word.content.ilike(f'%{letter}%'))
+
+        for idx, letter in enumerate(exact_place_filters):
+            if letter:
+                query = query.filter(Word.content[idx] == letter)
+
+        matching_words = query.all()
+
+        print("Matching Words:")
+        for word in matching_words:
+            print(word.content)
+
     return render_template('big_search.html')
+
+
 
 
 

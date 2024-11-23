@@ -15,7 +15,7 @@
         border-radius: 10px;
         padding: 20px;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        text-align: left;
+        text-align: center;
         width: 60%;
         margin: 20px auto;
     }
@@ -42,6 +42,30 @@
         text-align: center;
         margin: 15px 0;
     }
+
+    .letter-input {
+        width: 50px;
+        height: 50px;
+        font-size: 24px;
+        text-align: center;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+        margin-right: 10px;
+        box-sizing: border-box;
+    }
+
+    .letter-input:disabled {
+        background-color: #e0e0e0;
+    }
+
+    .center-inputs {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+        margin-top: 15px;
+    }
+
 </style>
 {% endblock %}
 
@@ -52,50 +76,76 @@
     <h2 style="text-align: center; color: #297400; text-decoration: underline; font-family: Arial; font-weight: bold;">Big search</h2>
 </div>
 
-<div>
-    <hr>
-    <div class="button-container">
-        <button class="button" onclick="toggleField('lettersWordInclude')">Letters word include filter</button>
-    </div>
-    <div id="lettersWordInclude" class="toggle-container" style="display: none;">
-        <label for="includeFilter">Filter:</label>
-        <input type="text" name="includeFilter" id="includeFilter" class="login_input" placeholder="Enter letters..." required>
-        <button class="close-btn" onclick="closeField('lettersWordInclude')">X</button>
+<form action="/big_search" method="POST">
+
+    <div>
+        <hr>
+        <div class="button-container">
+            <button class="button" onclick="toggleField('lettersWordInclude')">Letters word include filter</button>
+        </div>
+        <div id="lettersWordInclude" class="toggle-container" style="display: none;">
+            <p>type all the letters, that You think are in the word</p>
+            <p>[!] letters should be separated by dash '-' [!]</p>
+            <label for="includeFilter">Filter:</label>
+            <input type="text" name="includeFilter" id="includeFilter" class="login_input" required>
+            <button class="close-btn" onclick="closeField('lettersWordInclude')">X</button>
+        </div>
+
+        <div class="button-container">
+            <button class="button" onclick="toggleField('lettersNotInWord')">Letters not in word filter</button>
+        </div>
+        <div id="lettersNotInWord" class="toggle-container" style="display: none;">
+            <p>type all the letters You think are not in the word</p>
+            <p>[!] letters should be separated by dash '-' [!]</p>
+            <label for="notInWordFilter">Filter:</label>
+            <input type="text" name="notInWordFilter" id="notInWordFilter" class="login_input" required>
+            <button class="close-btn" onclick="closeField('lettersNotInWord')">X</button>
+        </div>
+
+        <div class="button-container">
+            <button class="button" onclick="toggleField('lettersOnPlace')">Letters exactly on place word filter</button>
+        </div>
+        <div id="lettersOnPlace" class="toggle-container" style="display: none;">
+            <p>type all the letters You know position of in the word</p>
+            <p>[!] in places, in which You don't know put dash '-' [!]</p>
+            <label>Filter:</label>
+            <div class="center-inputs">
+                <!-- Input fields for each letter position -->
+                <input type="text" name="exactPlaceFilter1" id="exactPlaceFilter1" class="letter-input" maxlength="1" required>
+                <input type="text" name="exactPlaceFilter2" id="exactPlaceFilter2" class="letter-input" maxlength="1" disabled>
+                <input type="text" name="exactPlaceFilter3" id="exactPlaceFilter3" class="letter-input" maxlength="1" disabled>
+                <input type="text" name="exactPlaceFilter4" id="exactPlaceFilter4" class="letter-input" maxlength="1" disabled>
+                <input type="text" name="exactPlaceFilter5" id="exactPlaceFilter5" class="letter-input" maxlength="1" disabled>
+            </div>
+            <button class="close-btn" onclick="closeField('lettersOnPlace')">X</button>
+        </div>
+
+        <div class="button-container">
+            <input type="submit" value="Get data" class="accept_button button-large">
+        </div>
+        <hr>
     </div>
 
-    <div class="button-container">
-        <button class="button" onclick="toggleField('lettersNotInWord')">Letters not in word filter</button>
-    </div>
-    <div id="lettersNotInWord" class="toggle-container" style="display: none;">
-        <label for="notInWordFilter">Filter:</label>
-        <input type="text" name="notInWordFilter" id="notInWordFilter" class="login_input" placeholder="Enter letters..." required>
-        <button class="close-btn" onclick="closeField('lettersNotInWord')">X</button>
-    </div>
+</form>
 
-    <div class="button-container">
-        <button class="button" onclick="toggleField('lettersOnPlace')">Letters exactly on place word filter</button>
-    </div>
-    <div id="lettersOnPlace" class="toggle-container" style="display: none;">
-        <label for="exactPlaceFilter">Filter:</label>
-        <input type="text" name="exactPlaceFilter" id="exactPlaceFilter" class="login_input" placeholder="Enter letters..." required>
-        <button class="close-btn" onclick="closeField('lettersOnPlace')">X</button>
-    </div>
-
-    <div class="button-container">
-        <input type="submit" value="Get data" class="accept_button button-large">
-    </div>
-
-    <div class="button-container">
-        <button class="back_button" onclick="window.location='/menu'">Back</button>
-    </div>
-    <hr>
+<div class="button-container">
+    <button class="back_button" onclick="window.location='/menu'">Back</button>
 </div>
 
 <script>
     function toggleField(fieldId) {
         const field = document.getElementById(fieldId);
+        const inputs = field.querySelectorAll('input[type="text"]');
+
         if (field.style.display === "none") {
             field.style.display = "block";
+
+            // Clear the input fields when the container is shown
+            inputs.forEach(input => {
+                input.value = "";
+                input.disabled = true; // Disable all inputs
+            });
+            inputs[0].disabled = false; // Enable the first input
         } else {
             field.style.display = "none";
         }
@@ -103,8 +153,41 @@
 
     function closeField(fieldId) {
         const field = document.getElementById(fieldId);
+        const inputs = field.querySelectorAll('input[type="text"]');
+
+        // Clear input fields when the container is closed
+        inputs.forEach(input => {
+            input.value = "";
+            input.disabled = true;
+        });
         field.style.display = "none";
     }
+
+    // Add event listeners to manage focus and unlocking next fields
+    document.addEventListener('DOMContentLoaded', function () {
+        const inputFields = [
+            document.getElementById('exactPlaceFilter1'),
+            document.getElementById('exactPlaceFilter2'),
+            document.getElementById('exactPlaceFilter3'),
+            document.getElementById('exactPlaceFilter4'),
+            document.getElementById('exactPlaceFilter5')
+        ];
+
+        inputFields.forEach((field, index) => {
+            field.addEventListener('input', function () {
+                if (field.value.length === 1 && index < inputFields.length - 1) {
+                    inputFields[index + 1].disabled = false; // Enable next field
+                    inputFields[index + 1].focus(); // Move focus to next field
+                }
+            });
+
+            field.addEventListener('keydown', function (event) {
+                if (event.key === 'Backspace' && field.value.length === 0 && index > 0) {
+                    inputFields[index - 1].focus(); // Move focus to previous field on backspace
+                }
+            });
+        });
+    });
 </script>
 
 {% endblock %}

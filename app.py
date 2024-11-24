@@ -388,7 +388,7 @@ def found_words():
     include_filter = request.args.get('includeFilter', '').lower()
     not_in_word_filter = request.args.get('notInWordFilter', '').lower()
     exact_place_str = request.args.get('exactPlaceFilters', '').lower()
-    
+
     exact_place_filters = exact_place_str.split(',')
 
     query = Word.query
@@ -403,9 +403,16 @@ def found_words():
             if letter:
                 query = query.filter(~Word.content.ilike(f'%{letter}%'))
 
-    prefix_match = "".join([letter if letter and letter != '-' else '' for letter in exact_place_filters])
-    if prefix_match:
-        query = query.filter(Word.content.like(f'{prefix_match}%'))
+    if exact_place_filters:
+        pattern = ''
+        for letter in exact_place_filters:
+            if letter == '-':
+                pattern += '_'
+            else:
+                pattern += letter
+
+        if pattern:
+            query = query.filter(Word.content.like(pattern))
 
     matching_words = query.all()
 

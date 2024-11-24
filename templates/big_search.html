@@ -81,43 +81,43 @@
     <div>
         <hr>
         <div class="button-container">
-            <button class="button" onclick="toggleField('lettersWordInclude')">Letters word include filter</button>
+            <button type="button" class="button" onclick="toggleField('lettersWordInclude')">Letters word include filter</button>
         </div>
         <div id="lettersWordInclude" class="toggle-container" style="display: none;">
-            <p>type all the letters, that You think are in the word</p>
-            <p>[!] letters should be separated by dash '-' [!]</p>
+            <p>Type all the letters that you think are in the word</p>
+            <p>[!] Letters should be separated by a dash '-' [!]</p>
             <label for="includeFilter">Filter:</label>
-            <input type="text" name="includeFilter" id="includeFilter" class="login_input" required>
-            <button class="close-btn" onclick="closeField('lettersWordInclude')">X</button>
+            <input type="text" name="includeFilter" id="includeFilter" class="login_input">
+            <button type="button" class="close-btn" onclick="closeField('lettersWordInclude')">X</button>
         </div>
 
         <div class="button-container">
-            <button class="button" onclick="toggleField('lettersNotInWord')">Letters not in word filter</button>
+            <button type="button" class="button" onclick="toggleField('lettersNotInWord')">Letters not in word filter</button>
         </div>
         <div id="lettersNotInWord" class="toggle-container" style="display: none;">
-            <p>type all the letters You think are not in the word</p>
-            <p>[!] letters should be separated by dash '-' [!]</p>
+            <p>Type all the letters you think are not in the word</p>
+            <p>[!] Letters should be separated by a dash '-' [!]</p>
             <label for="notInWordFilter">Filter:</label>
-            <input type="text" name="notInWordFilter" id="notInWordFilter" class="login_input" required>
-            <button class="close-btn" onclick="closeField('lettersNotInWord')">X</button>
+            <input type="text" name="notInWordFilter" id="notInWordFilter" class="login_input">
+            <button type="button" class="close-btn" onclick="closeField('lettersNotInWord')">X</button>
         </div>
 
         <div class="button-container">
-            <button class="button" onclick="toggleField('lettersOnPlace')">Letters exactly on place word filter</button>
+            <button type="button" class="button" onclick="toggleField('lettersOnPlace')">Letters exactly on place word filter</button>
         </div>
         <div id="lettersOnPlace" class="toggle-container" style="display: none;">
-            <p>type all the letters You know position of in the word</p>
-            <p>[!] in places, in which You don't know put dash '-' [!]</p>
+            <p>Type all the letters you know the position of in the word</p>
+            <p>[!] In places where you don't know the letter, put a dash '-' [!]</p>
             <label>Filter:</label>
             <div class="center-inputs">
                 <!-- Input fields for each letter position -->
-                <input type="text" name="exactPlaceFilter1" id="exactPlaceFilter1" class="letter-input" maxlength="1" required>
+                <input type="text" name="exactPlaceFilter1" id="exactPlaceFilter1" class="letter-input" maxlength="1">
                 <input type="text" name="exactPlaceFilter2" id="exactPlaceFilter2" class="letter-input" maxlength="1" disabled>
                 <input type="text" name="exactPlaceFilter3" id="exactPlaceFilter3" class="letter-input" maxlength="1" disabled>
                 <input type="text" name="exactPlaceFilter4" id="exactPlaceFilter4" class="letter-input" maxlength="1" disabled>
                 <input type="text" name="exactPlaceFilter5" id="exactPlaceFilter5" class="letter-input" maxlength="1" disabled>
             </div>
-            <button class="close-btn" onclick="closeField('lettersOnPlace')">X</button>
+            <button type="button" class="close-btn" onclick="closeField('lettersOnPlace')">X</button>
         </div>
 
         <div class="button-container">
@@ -129,7 +129,7 @@
 </form>
 
 <div class="button-container">
-    <button class="back_button" onclick="window.location='/menu'">Back</button>
+    <button type="button" class="back_button" onclick="window.location='/menu'">Back</button>
 </div>
 
 <script>
@@ -140,14 +140,18 @@
         if (field.style.display === "none") {
             field.style.display = "block";
 
-            // Clear the input fields when the container is shown
+            // Add 'required' attribute to the inputs in the shown container
             inputs.forEach(input => {
-                input.value = "";
-                input.disabled = true; // Disable all inputs
+                input.disabled = false; // Enable inputs
+                input.setAttribute('required', 'required');
             });
-            inputs[0].disabled = false; // Enable the first input
+
         } else {
             field.style.display = "none";
+            // Remove 'required' attribute from the inputs when the container is hidden
+            inputs.forEach(input => {
+                input.removeAttribute('required');
+            });
         }
     }
 
@@ -159,6 +163,7 @@
         inputs.forEach(input => {
             input.value = "";
             input.disabled = true;
+            input.removeAttribute('required'); // Remove 'required' attribute
         });
         field.style.display = "none";
     }

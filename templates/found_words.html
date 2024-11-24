@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<title>Un-Literally</title>
+<style>
+    .label-top-align {
+        vertical-align: top;
+        display: inline-block;
+        margin-top: 7px;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+
+<div class="name">
+    <h1 style="text-align: center; color: #297400; font-family: Arial; font-weight: bold;">Un-Literally</h1>
+    <h2 style="text-align: center; color: #297400; text-decoration: underline; font-family: Arial; font-weight: bold;">Search result</h2>
+</div>
+
+
+<form action="/found_words" method="GET">
+    <div>
+        <hr>
+        <div class="container_row">
+
+            {% if words|length < 1 %}
+                <h4 style="text-align: center;">No words match those filters</h4>
+            {% else %}
+                <table>
+                    <tr>
+                        <th>Content</th>
+                        <th>Definition</th>
+                        <th>Last as word of the day</th>
+                        <th>Added by</th>
+                        <th>Actions</th>
+                    </tr>
+                    {% for word in words %}
+                        <tr>
+                            <td>{{ word.content }}</td>
+                            <td>{{ word.definition }}</td>
+                            <td>{{ word.last_as_word_of_the_day }}</td>
+                            <td>{{ word.added_by }}</td>
+                            <td>
+                                <a href="/show/word_{{word.id}}">Show</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </table>
+            {% endif %}
+        </div>
+
+    </div>
+
+</form>
+
+
+<div class="container_column">
+    <button class="back_button" onclick="window.location='/menu'" style="margin-left: 10px;">Back</button>
+</div>
+
+{% endblock %}

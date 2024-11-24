@@ -1,10 +1,10 @@
-from flask import Flask, render_template, request, redirect, session
+from flask import Flask, render_template, request, redirect, session, url_for
 from flask_session import Session
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import func
 from flask_login import UserMixin, LoginManager, login_user, login_required, logout_user, current_user
 from datetime import datetime
 from flask_bcrypt import Bcrypt
-
 app = Flask(__name__)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///words.db'
@@ -372,32 +372,44 @@ def big_search():
             request.form.get('exactPlaceFilter5', '').lower()
         ]
 
-        query = Word.query
-        print('===')
+        exact_place_str = ",".join(exact_place_filters)
 
-        if include_filter:
-            for letter in include_filter:
-                query = query.filter(Word.content.ilike(f'%{letter}%'))
-
-        if not_in_word_filter:
-            for letter in not_in_word_filter:
-                query = query.filter(~Word.content.ilike(f'%{letter}%'))
-
-        for idx, letter in enumerate(exact_place_filters):
-            if letter:
-                query = query.filter(Word.content[idx] == letter)
-
-        matching_words = query.all()
-
-        print("Matching Words:")
-        for word in matching_words:
-            print(word.content)
+        return redirect(url_for('found_words', 
+                                includeFilter=include_filter, 
+                                notInWordFilter=not_in_word_filter,
+                                exactPlaceFilters=exact_place_str))
 
     return render_template('big_search.html')
 
 
+@app.route('/found_words', methods=['GET'])
+@login_required
+def found_words():
+    include_filter = request.args.get('includeFilter', '').lower()
+    not_in_word_filter = request.args.get('notInWordFilter', '').lower()
+    exact_place_str = request.args.get('exactPlaceFilters', '').lower()
+    
+    exact_place_filters = exact_place_str.split(',')
 
+    query = Word.query
 
+    if include_filter:
+        for letter in include_filter.split('-'):
+            if letter:
+                query = query.filter(Word.content.ilike(f'%{letter}%'))
+
+    if not_in_word_filter:
+        for letter in not_in_word_filter.split('-'):
+            if letter:
+                query = query.filter(~Word.content.ilike(f'%{letter}%'))
+
+    prefix_match = "".join([letter if letter and letter != '-' else '' for letter in exact_place_filters])
+    if prefix_match:
+        query = query.filter(Word.content.like(f'{prefix_match}%'))
+
+    matching_words = query.all()
+
+    return render_template('found_words.html', words=matching_words)
 
 
 

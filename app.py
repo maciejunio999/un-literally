@@ -118,9 +118,17 @@ def menu():
 @app.route('/logout', methods=['GET'])
 @login_required
 def logout():
-    logout_user()
-    session.clear()
-    return redirect('/')
+    new_event = History(action='Log out', user=session['username'])
+    try:
+        db.session.add(new_event)
+        db.session.commit()
+        session['username_used']=False
+        logout_user()
+        session.clear()
+        return redirect('/')
+    except:
+        return render_template('error_page.html', message="[?] There was an issue adding new user")
+    
 
 
 # login page
@@ -136,7 +144,14 @@ def login():
                 session['username'] = user.username
                 session['role'] = user.role_id
                 login_user(user)
-                return redirect('/menu')
+                new_event = History(action='Log in', user=session['username'])
+                try:
+                    db.session.add(new_event)
+                    db.session.commit()
+                    session['username_used']=False
+                    return redirect('/menu')
+                except:
+                    return render_template('error_page.html', message="[?] There was an issue adding new user")
             else:
                 return render_template('login.html', y=True, x=False)
         else:
@@ -165,8 +180,10 @@ def admin_register():
                 hashed_password = bcrypt.generate_password_hash(password)
                 role = Role.query.filter_by(name=role_name).first()
                 new_user = User(username=username, password=hashed_password, role=role)
+                new_event = History(action=f'Create new user, named: {new_user.username}', user=session['username'])
                 try:
                     db.session.add(new_user)
+                    db.session.add(new_event)
                     db.session.commit()
                     session['username_used']=False
                     return redirect('/menu')
@@ -184,8 +201,7 @@ def admin_register():
 def all_users():
     if 1 == current_user.role_id:
         users = User.query.order_by(User.username).all()
-        x = current_user.id
-        return render_template('all_users.html', users=users, id=x)
+        return render_template('all_users.html', users=users, id=current_user.id)
     else:
         return render_template('error_page.html', message="[!] You dont have permission to add new users")
 
@@ -195,16 +211,21 @@ def all_users():
 def update_user(id):
     if 1 == current_user.role_id:
         user_to_update = User.query.get_or_404(id)
+        message = f'Updating user named: {user_to_update.username}.'
         if request.method == 'POST':
             username = request.form['username'].strip()
             role_id = int(request.form['role'].strip())
             new_password = request.form['password'].strip()
 
-            # Walidacja nazwy użytkownika
+            if role_id != user_to_update.role_id:
+                role = Role.query.get_or_404(role_id)
+                message += f' Role changed to {role.name}.'
+
             if username != user_to_update.username:
                 validate_name = validate_username(username)
                 if validate_name:
                     session['repited_user'] = True
+                    message += f' Changed name to {username}.'
                     return render_template('edit_user.html', user=user_to_update, message='[!] This username is already taken.')
 
             user_to_update.username = username
@@ -212,8 +233,11 @@ def update_user(id):
             if new_password:
                 new_password_hashed = bcrypt.generate_password_hash(new_password)
                 user_to_update.password = new_password_hashed
-
+                message += f' Changed password.'
+                
+            new_event = History(action=message, user=session['username'])
             try:
+                db.session.add(new_event)
                 db.session.commit()
                 session['repited_user'] = False
                 return redirect('/all_users')
@@ -232,6 +256,7 @@ def delete_user(id):
     if current_user.id != id:
         if 1 == current_user.role_id:
             user_to_delete = User.query.get_or_404(id)
+            new_event = History(action='Delete user', user=session['username'])
             try:
                 db.session.delete(user_to_delete)
                 db.session.commit()
@@ -419,6 +444,32 @@ def found_words():
     return render_template('found_words.html', words=matching_words)
 
 
+###################################################################################################################################
+#   Extra module
+###################################################################################################################################
+
+
+@app.route('/history', methods=['GET'])
+@login_required
+def history():
+    events = History.query.order_by(History.date).all()
+    return render_template('history.html', events=events)
+
+
+@app.route('/delete/events')
+@login_required
+def connecting():
+    events = History.query.order_by(History.date).all()
+    if events:
+        try:
+            History.query.delete()
+            db.session.commit()
+            return render_template('loading_page.html')
+        except:
+            db.session.rollback()
+            return render_template('error_page.html', message="[?] There was an issue deleting history")
+    else:
+        return render_template('error_page.html', message="[!] There is no history in database")
 
 
 if __name__ == "__main__":

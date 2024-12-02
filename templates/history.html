@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<title>Un-Literally</title>
+<style>
+    .label-top-align {
+        vertical-align: top;
+        display: inline-block;
+        margin-top: 7px;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+
+<div class="name">
+    <h1 style="text-align: center; color: #297400; font-family: Arial; font-weight: bold;">Un-Literally</h1>
+    <h2 style="text-align: center; color: #297400; text-decoration: underline; font-family: Arial; font-weight: bold;">History</h2>
+</div>
+
+<div>
+    <hr>
+    <div class="container_row">
+
+        {% if events|length < 1 %}
+            <h4 style="text-align: center;">There is no history saved</h4>
+        {% else %}
+            <table>
+                <tr>
+                    <th>Event description</th>
+                    <th>Username</th>
+                    <th>Date</th>
+                    <th>Actions</th>
+                </tr>
+                {% for event in events %}
+                    <tr>
+                        <td>{% if event.action|length > 150 %}
+                            {{ event.action[:150] + ' ...' }}
+                        {% else %}
+                            {{ event.action }}
+                        {% endif %}
+                        </td>
+                        <td></td>
+                        <td>{{ event.user }}</td>
+                        <td>{{ event.date.date() }}</td>
+                        <td>
+                            <a href="/show/event_{{event.id}}">Show</a>
+                            <br>
+                            <a href="/delete/event_{{event.id}}">Delete</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </table>
+        {% endif %}
+    </div>
+
+</div>
+
+<div class="container_column">
+    <button class="accept_button" onclick="window.location='/delete/events'" style="margin-left: 10px;">Clear events</button>
+</div>
+
+<div class="container_column">
+    <button class="back_button" onclick="window.location='/menu'" style="margin-left: 10px;">Back</button>
+</div>
+
+{% endblock %}

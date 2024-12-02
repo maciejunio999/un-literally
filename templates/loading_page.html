@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+
+{% block head %}
+<title>Un-Literally</title>
+
+<script>
+    setTimeout(function(){
+        window.location.href = "/menu";
+    }, 2000); // Przekierowanie po 2 sekundach
+</script>
+
+<style>
+    .loader-container {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: 50vh;
+    }
+</style>
+
+{% endblock %}
+
+
+{% block body %}
+<div class="name">
+    <h1 style="text-align: center; color: #297400; font-family: Arial; font-weight: bold;">Un-Literally</h1>
+    <h2 style="text-align: center; color: #3e751b;">Loading . . .</h2>
+    <hr>
+</div>
+
+
+<div class="name loader-container">
+
+    <p>{{ message }}</p>
+
+    <div class="loader"></div>
+
+    <p>  </p>
+
+    <hr>
+    
+    <button class="menu_button" onclick="window.location='/menu'">Menu</button>
+
+    <hr>
+
+</div>
+{% endblock %}

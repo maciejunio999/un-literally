@@ -52,4 +52,15 @@
     <hr>
 </div>
 
+<script>
+    document.getElementById('content').addEventListener('input', function() {
+        const input = this.value;
+        if (input.length !== 5) {
+            this.setCustomValidity('Word has to have exaclty 5 characters.');
+        } else {
+            this.setCustomValidity('');
+        }
+    });
+</script>
+
 {% endblock %}

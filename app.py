@@ -128,8 +128,19 @@ def logout():
         logout_user()
         session.clear()
         return redirect('/')
-    except:
+    except Exception as e:
         db.session.rollback()
+        payload = {
+            "error": str(e),
+            "word_id": id,
+            "username": session.get('username', 'unknown'),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        try:
+            response = requests.post("http://127.0.0.1:80/log_exception", json=payload)
+            response.raise_for_status()
+        except requests.exceptions.RequestException as req_e:
+            current_app.logger.error(f"Failed to make a call to logging endpoint: {req_e}")
         return render_template('error_page.html', message="[?] There was an issue adding new user")
     
 
@@ -153,8 +164,19 @@ def login():
                     db.session.commit()
                     session['username_used']=False
                     return redirect('/menu')
-                except:
+                except Exception as e:
                     db.session.rollback()
+                    payload = {
+                        "error": str(e),
+                        "word_id": id,
+                        "username": session.get('username', 'unknown'),
+                        "timestamp": datetime.utcnow().isoformat()
+                    }
+                    try:
+                        response = requests.post("http://127.0.0.1:80/log_exception", json=payload)
+                        response.raise_for_status()
+                    except requests.exceptions.RequestException as req_e:
+                        current_app.logger.error(f"Failed to make a call to logging endpoint: {req_e}")
                     return render_template('error_page.html', message="[?] There was an issue adding new user")
             else:
                 return render_template('login.html', y=True, x=False)
@@ -187,6 +209,17 @@ def log_exception():
 
     except Exception as e:
         db.session.rollback()
+        payload = {
+            "error": str(e),
+            "word_id": id,
+            "username": session.get('username', 'unknown'),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        try:
+            response = requests.post("http://127.0.0.1:80/log_exception", json=payload)
+            response.raise_for_status()
+        except requests.exceptions.RequestException as req_e:
+            current_app.logger.error(f"Failed to make a call to logging endpoint: {req_e}")
         return jsonify({"error": f"Failed to log error: {str(e)}"}), 500
 
 
@@ -217,8 +250,19 @@ def admin_register():
                     db.session.commit()
                     session['username_used']=False
                     return redirect('/menu')
-                except:
+                except Exception as e:
                     db.session.rollback()
+                    payload = {
+                        "error": str(e),
+                        "word_id": id,
+                        "username": session.get('username', 'unknown'),
+                        "timestamp": datetime.utcnow().isoformat()
+                    }
+                    try:
+                        response = requests.post("http://127.0.0.1:80/log_exception", json=payload)
+                        response.raise_for_status()
+                    except requests.exceptions.RequestException as req_e:
+                        current_app.logger.error(f"Failed to make a call to logging endpoint: {req_e}")
                     return render_template('error_page.html', message="[?] There was an issue adding new user")
         else:
             return render_template('admin_register.html', show_hidden=False)
@@ -274,6 +318,17 @@ def update_user(id):
                 return redirect('/all_users')
             except Exception as e:
                 db.session.rollback()
+                payload = {
+                    "error": str(e),
+                    "word_id": id,
+                    "username": session.get('username', 'unknown'),
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+                try:
+                    response = requests.post("http://127.0.0.1:80/log_exception", json=payload)
+                    response.raise_for_status()
+                except requests.exceptions.RequestException as req_e:
+                    current_app.logger.error(f"Failed to make a call to logging endpoint: {req_e}")
                 return render_template('error_page.html', message=f"[?] There was an issue updating that user: {str(e)}")
         else:
             return render_template('edit_user.html', user=user_to_update)
@@ -298,8 +353,19 @@ def delete_user(id):
                     return redirect('/all_users')
                 else:
                     return redirect('/menu')
-            except:
+            except Exception as e:
                 db.session.rollback()
+                payload = {
+                    "error": str(e),
+                    "word_id": id,
+                    "username": session.get('username', 'unknown'),
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+                try:
+                    response = requests.post("http://127.0.0.1:80/log_exception", json=payload)
+                    response.raise_for_status()
+                except requests.exceptions.RequestException as req_e:
+                    current_app.logger.error(f"Failed to make a call to logging endpoint: {req_e}")
                 return render_template('error_page.html', message="[?] There was an issue deleting that user")
         else:
             return render_template('error_page.html', message='[!] You do not have permission to delete users')
@@ -353,8 +419,19 @@ def add_word():
                 db.session.commit()
                 session['word_already_exists']=False
                 return redirect('/menu')
-            except:
+            except Exception as e:
                 db.session.rollback()
+                payload = {
+                    "error": str(e),
+                    "word_id": id,
+                    "username": session.get('username', 'unknown'),
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+                try:
+                    response = requests.post("http://127.0.0.1:80/log_exception", json=payload)
+                    response.raise_for_status()
+                except requests.exceptions.RequestException as req_e:
+                    current_app.logger.error(f"Failed to make a call to logging endpoint: {req_e}")
                 return 'There was an issue adding your test'
     else:
         session['word_already_exists']=False
@@ -384,8 +461,19 @@ def delete_proposal(id):
                 return redirect('/all_proposals')
             else:
                 return redirect('/menu')
-        except:
+        except Exception as e:
             db.session.rollback()
+            payload = {
+                "error": str(e),
+                "word_id": id,
+                "username": session.get('username', 'unknown'),
+                "timestamp": datetime.utcnow().isoformat()
+            }
+            try:
+                response = requests.post("http://127.0.0.1:80/log_exception", json=payload)
+                response.raise_for_status()
+            except requests.exceptions.RequestException as req_e:
+                current_app.logger.error(f"Failed to make a call to logging endpoint: {req_e}")
             return render_template('error_page.html', message="[?] There was an issue deleting that proposal")
     else:
         return render_template('error_page.html', message='[!] You do not have permission to delete proposals')
@@ -420,8 +508,19 @@ def accept_proposal(id):
                 return redirect('/all_proposals')
             else:
                 return redirect('/menu')
-        except:
+        except Exception as e:
             db.session.rollback()
+            payload = {
+                "error": str(e),
+                "word_id": id,
+                "username": session.get('username', 'unknown'),
+                "timestamp": datetime.utcnow().isoformat()
+            }
+            try:
+                response = requests.post("http://127.0.0.1:80/log_exception", json=payload)
+                response.raise_for_status()
+            except requests.exceptions.RequestException as req_e:
+                current_app.logger.error(f"Failed to make a call to logging endpoint: {req_e}")
             return render_template('error_page.html', message="[?] There was an issue deleting that proposal")
     else:
         return render_template('error_page.html', message='[!] You do not have permission to accept proposals')
@@ -443,7 +542,6 @@ def big_search():
 
         exact_place_str = ",".join(exact_place_filters)
         if ',,,,' == exact_place_str:
-            print(exact_place_str)
             return render_template('big_search.html', x=True)
         else:
             return redirect(url_for('found_words', 
@@ -461,20 +559,23 @@ def found_words():
     exact_place_str = request.args.get('exactPlaceFilters', '').lower()
 
     exact_place_filters = exact_place_str.split(',')
-
+    filters = ''
     query = Word.query
 
     if include_filter:
+        filters += '[Letters word include filter]'
         for letter in include_filter.split('-'):
             if letter:
                 query = query.filter(Word.content.ilike(f'%{letter}%'))
 
     if not_in_word_filter:
+        filters += '[Letters not in word filter]'
         for letter in not_in_word_filter.split('-'):
             if letter:
                 query = query.filter(~Word.content.ilike(f'%{letter}%'))
 
     if exact_place_filters:
+        filters += '[Letters exactly on place word filter]'
         pattern = ''
         for letter in exact_place_filters:
             if letter == '-':
@@ -486,8 +587,26 @@ def found_words():
             query = query.filter(Word.content.like(pattern))
 
     matching_words = query.all()
-
-    return render_template('found_words.html', words=matching_words)
+    new_event = History(action=f'Searched for word with {filters}', user=session['username'])
+    
+    try:
+        db.session.add(new_event)
+        db.session.commit()
+        return render_template('found_words.html', words=matching_words)
+    except Exception as e:
+        db.session.rollback()
+        payload = {
+            "error": str(e),
+            "word_id": id,
+            "username": session.get('username', 'unknown'),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        try:
+            response = requests.post("http://127.0.0.1:80/log_exception", json=payload)
+            response.raise_for_status()
+        except requests.exceptions.RequestException as req_e:
+            current_app.logger.error(f"Failed to make a call to logging endpoint: {req_e}")
+        render_template('error_page.html', message=f"[?] There was an issue while looking for words")
 
 
 @app.route('/show/word_<int:id>', methods=['GET', 'POST'])
@@ -504,7 +623,6 @@ def show_word(id):
         return render_template('show_word.html', word=word_to_show)
     except Exception as e:
         db.session.rollback()
-        endpoint_url = "http://127.0.0.1:80/log_exception"
         payload = {
             "error": str(e),
             "word_id": id,
@@ -512,7 +630,7 @@ def show_word(id):
             "timestamp": datetime.utcnow().isoformat()
         }
         try:
-            response = requests.post(endpoint_url, json=payload)
+            response = requests.post("http://127.0.0.1:80/log_exception", json=payload)
             response.raise_for_status()
         except requests.exceptions.RequestException as req_e:
             current_app.logger.error(f"Failed to make a call to logging endpoint: {req_e}")
@@ -540,8 +658,19 @@ def deleting():
             History.query.delete()
             db.session.commit()
             return render_template('loading_page.html')
-        except:
+        except Exception as e:
             db.session.rollback()
+            payload = {
+                "error": str(e),
+                "word_id": id,
+                "username": session.get('username', 'unknown'),
+                "timestamp": datetime.utcnow().isoformat()
+            }
+            try:
+                response = requests.post("http://127.0.0.1:80/log_exception", json=payload)
+                response.raise_for_status()
+            except requests.exceptions.RequestException as req_e:
+                current_app.logger.error(f"Failed to make a call to logging endpoint: {req_e}")
             return render_template('error_page.html', message="[?] There was an issue deleting history")
     else:
         return render_template('error_page.html', message="[!] There is no history in database")

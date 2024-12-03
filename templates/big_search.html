@@ -123,10 +123,13 @@
         <div class="button-container">
             <input type="submit" value="Get data" class="accept_button button-large">
         </div>
-        <hr>
     </div>
-
 </form>
+
+<hr>
+{% if x %}
+    <p style="text-align: center;color: red;">Filters are empty!</p>
+{% endif %}
 
 <div class="button-container">
     <button type="button" class="back_button" onclick="window.location='/menu'">Back</button>

@@ -1,10 +1,12 @@
-from flask import Flask, render_template, request, redirect, session, url_for
+from flask import Flask, render_template, request, redirect, session, url_for, jsonify, current_app
 from flask_session import Session
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func
 from flask_login import UserMixin, LoginManager, login_user, login_required, logout_user, current_user
 from datetime import datetime
 from flask_bcrypt import Bcrypt
+import requests
+
 app = Flask(__name__)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///words.db'
@@ -127,6 +129,7 @@ def logout():
         session.clear()
         return redirect('/')
     except:
+        db.session.rollback()
         return render_template('error_page.html', message="[?] There was an issue adding new user")
     
 
@@ -151,6 +154,7 @@ def login():
                     session['username_used']=False
                     return redirect('/menu')
                 except:
+                    db.session.rollback()
                     return render_template('error_page.html', message="[?] There was an issue adding new user")
             else:
                 return render_template('login.html', y=True, x=False)
@@ -158,6 +162,32 @@ def login():
             return render_template('login.html', x=True, y=False)
     else:
         return render_template('login.html', x=False, y=False)
+
+# function to log errors in History table
+@app.route('/log_exception', methods=['POST'])
+def log_exception():
+    try:
+        data = request.get_json()
+
+        error_message = data.get('error')
+        word_id = data.get('word_id')
+        username = data.get('username', 'unknown')
+        timestamp = data.get('timestamp', datetime.utcnow().isoformat())
+
+        new_event = History(
+            action=f"Error occurred for word_id {word_id}: {error_message}",
+            user=username,
+            date=datetime.fromisoformat(timestamp)
+        )
+
+        db.session.add(new_event)
+        db.session.commit()
+
+        return jsonify({"message": "Error logged successfully"}), 201
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": f"Failed to log error: {str(e)}"}), 500
 
 
 ###################################################################################################################################
@@ -188,6 +218,7 @@ def admin_register():
                     session['username_used']=False
                     return redirect('/menu')
                 except:
+                    db.session.rollback()
                     return render_template('error_page.html', message="[?] There was an issue adding new user")
         else:
             return render_template('admin_register.html', show_hidden=False)
@@ -234,7 +265,7 @@ def update_user(id):
                 new_password_hashed = bcrypt.generate_password_hash(new_password)
                 user_to_update.password = new_password_hashed
                 message += f' Changed password.'
-                
+
             new_event = History(action=message, user=session['username'])
             try:
                 db.session.add(new_event)
@@ -242,6 +273,7 @@ def update_user(id):
                 session['repited_user'] = False
                 return redirect('/all_users')
             except Exception as e:
+                db.session.rollback()
                 return render_template('error_page.html', message=f"[?] There was an issue updating that user: {str(e)}")
         else:
             return render_template('edit_user.html', user=user_to_update)
@@ -258,6 +290,7 @@ def delete_user(id):
             user_to_delete = User.query.get_or_404(id)
             new_event = History(action='Delete user', user=session['username'])
             try:
+                db.session.add(new_event)
                 db.session.delete(user_to_delete)
                 db.session.commit()
                 users = User.query.all()
@@ -266,6 +299,7 @@ def delete_user(id):
                 else:
                     return redirect('/menu')
             except:
+                db.session.rollback()
                 return render_template('error_page.html', message="[?] There was an issue deleting that user")
         else:
             return render_template('error_page.html', message='[!] You do not have permission to delete users')
@@ -308,15 +342,19 @@ def add_word():
             return render_template('add_word.html')
         else:
             if 1 == session['role']:
+                new_event = History(action=f'Added new word: {content}', user=session['username'])
                 new_word = Word(content=content, searched=searched, definition=definition, source=source, added_by=added_by)
             else:
+                new_event = History(action=f'Added new proposal for: {content}', user=session['username'])
                 new_word = Proposal(name=content, reasoning=definition, user=added_by)
             try:
+                db.session.add(new_event)
                 db.session.add(new_word)
                 db.session.commit()
                 session['word_already_exists']=False
                 return redirect('/menu')
             except:
+                db.session.rollback()
                 return 'There was an issue adding your test'
     else:
         session['word_already_exists']=False
@@ -336,7 +374,9 @@ def proposals():
 def delete_proposal(id):
     if 1 == current_user.role_id:
         proposal_to_delete = Proposal.query.get_or_404(id)
+        new_event = History(action=f'Delete proposal : {proposal_to_delete.name}', user=session['username'])
         try:
+            db.session.add(new_event)
             db.session.delete(proposal_to_delete)
             db.session.commit()
             proposals = Proposal.query.all()
@@ -345,6 +385,7 @@ def delete_proposal(id):
             else:
                 return redirect('/menu')
         except:
+            db.session.rollback()
             return render_template('error_page.html', message="[?] There was an issue deleting that proposal")
     else:
         return render_template('error_page.html', message='[!] You do not have permission to delete proposals')
@@ -368,7 +409,9 @@ def accept_proposal(id):
         source = "Added by user, accepted by one of admins"
         added_by = proposal_to_delete.user
         new_word = Word(content=content, searched=searched, definition=definition, source=source, added_by=added_by)
+        new_event = History(action=f'Accept proposal : {content}', user=session['username'])
         try:
+            db.session.add(new_event)
             db.session.delete(proposal_to_delete)
             db.session.add(new_word)
             db.session.commit()
@@ -378,6 +421,7 @@ def accept_proposal(id):
             else:
                 return redirect('/menu')
         except:
+            db.session.rollback()
             return render_template('error_page.html', message="[?] There was an issue deleting that proposal")
     else:
         return render_template('error_page.html', message='[!] You do not have permission to accept proposals')
@@ -398,12 +442,14 @@ def big_search():
         ]
 
         exact_place_str = ",".join(exact_place_filters)
-
-        return redirect(url_for('found_words', 
+        if ',,,,' == exact_place_str:
+            print(exact_place_str)
+            return render_template('big_search.html', x=True)
+        else:
+            return redirect(url_for('found_words', 
                                 includeFilter=include_filter, 
                                 notInWordFilter=not_in_word_filter,
                                 exactPlaceFilters=exact_place_str))
-
     return render_template('big_search.html')
 
 
@@ -444,6 +490,35 @@ def found_words():
     return render_template('found_words.html', words=matching_words)
 
 
+@app.route('/show/word_<int:id>', methods=['GET', 'POST'])
+@login_required
+def show_word(id):
+    word_to_show = Word.query.get_or_404(id)
+    word_to_show.searched += 1
+    word_to_show.last_search = datetime.utcnow()
+    new_event = History(action=f'Searched for word:{word_to_show.content}', user=session['username'])
+    
+    try:
+        db.session.add(new_event)
+        db.session.commit()
+        return render_template('show_word.html', word=word_to_show)
+    except Exception as e:
+        db.session.rollback()
+        endpoint_url = "http://127.0.0.1:80/log_exception"
+        payload = {
+            "error": str(e),
+            "word_id": id,
+            "username": session.get('username', 'unknown'),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        try:
+            response = requests.post(endpoint_url, json=payload)
+            response.raise_for_status()
+        except requests.exceptions.RequestException as req_e:
+            current_app.logger.error(f"Failed to make a call to logging endpoint: {req_e}")
+
+        return render_template('error_page.html', message=f"[?] There was an issue showing this word: {str(e)}")
+
 ###################################################################################################################################
 #   Extra module
 ###################################################################################################################################
@@ -458,7 +533,7 @@ def history():
 
 @app.route('/delete/events')
 @login_required
-def connecting():
+def deleting():
     events = History.query.order_by(History.date).all()
     if events:
         try:

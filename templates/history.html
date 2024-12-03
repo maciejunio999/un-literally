@@ -40,9 +40,8 @@
                             {{ event.action }}
                         {% endif %}
                         </td>
-                        <td></td>
                         <td>{{ event.user }}</td>
-                        <td>{{ event.date.date() }}</td>
+                        <td>{{ event.date.strftime("%d %B %Y %H:%M") }}</td>
                         <td>
                             <a href="/show/event_{{event.id}}">Show</a>
                             <br>

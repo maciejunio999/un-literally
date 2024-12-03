@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<title>Test Master</title>
+{% endblock %}
+
+{% block body %}
+<div class="container_column">
+
+    <h1 style="color: #297400; font-size: 25px;">Selected word to show</h1>
+
+    <div class="info_block">
+        <p class="info_label">Word:</p>
+        <p class="info_value">{{word.content}}</p>
+    </div>
+
+    <div class="info_block">
+        <p class="info_label">Searched:</p>
+        <p class="info_value">{{word.searched}}</p>
+    </div>
+
+    <div class="info_block">
+        <p class="info_label">Last search date:</p>
+        <p class="info_value">{{word.last_search.strftime("%d %B %Y %H:%M")}}</p>
+    </div>
+
+    {% if word.las_as_word_of_literally is not none %}
+        <div class="info_block">
+            <p class="info_label">Last time as word of literally:</p>
+            <p class="info_value">{{word.last_as_word_of_literally.strftime("%d %B %Y %H:%M")}}</p>
+        </div>
+    {% endif %}
+
+    <div class="info_block">
+        <p class="info_label">Source:</p>
+        <p class="info_value">{{word.source}}</p>
+        <p class="info_label">Added by:</p>
+        <p class="info_value">{{word.added_by}}</p>
+    </div>
+
+    <div class="info_block">
+        <p class="info_label">Definition:</p>
+        <textarea id="content" name="content" rows="15" cols="150" class="description_area" disabled>{{word.definition}}</textarea>
+    </div>
+
+    <div class="button-container">
+        <form action="/word_of_the_day_{{word.id}}" method="POST">
+            <button type="submit" class="accept_button">Accept</button>
+        </form>
+        <button class="back_button_v2" onclick="window.location='/big_search'">Back</button>
+    </div>
+</div>
+{% endblock %}

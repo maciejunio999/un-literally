@@ -437,6 +437,46 @@ def add_word():
         session['word_already_exists']=False
         return render_template('add_word.html')
 
+
+@app.route('/edit_word_<int:id>', methods=['GET', 'POST'])
+@login_required
+def edit_word(id):
+    word_to_edit = Word.query.get_or_404(id)
+
+    if request.method == 'POST':
+        try:
+            # Update only editable fields
+            word_to_edit.searched = request.form.get('searched', word_to_edit.searched)
+            word_to_edit.definition = request.form.get('definition', word_to_edit.definition)
+
+            # Commit the changes to the database
+            db.session.commit()
+
+            # Create a new event in the History table
+            new_event = History(action=f'Edited word: {word_to_edit.content}', user=session['username'])
+            db.session.add(new_event)
+            db.session.commit()
+
+            return redirect(url_for('big_search'))
+
+        except Exception as e:
+            db.session.rollback()
+            payload = {
+                "error": str(e),
+                "word_id": id,
+                "username": session.get('username', 'unknown'),
+                "timestamp": datetime.utcnow().isoformat()
+            }
+            try:
+                response = requests.post("http://127.0.0.1:80/log_exception", json=payload)
+                response.raise_for_status()
+            except requests.exceptions.RequestException as req_e:
+                current_app.logger.error(f"Failed to make a call to logging endpoint: {req_e}")
+            return render_template('error_page.html', message=f"[?] There was an issue updating this word: {str(e)}")
+    else:
+        return render_template('edit_word.html', word=word_to_edit)
+
+
 # PROPOSALS
 
 @app.route('/all_proposals')
@@ -674,6 +714,31 @@ def deleting():
             return render_template('error_page.html', message="[?] There was an issue deleting history")
     else:
         return render_template('error_page.html', message="[!] There is no history in database")
+
+@app.route('/delete/event_<int:id>')
+@login_required
+def delete_event(id):
+    if 1 == current_user.role_id:
+        event_to_delete = History.query.get_or_404(id)
+        try:
+            db.session.delete(event_to_delete)
+            db.session.commit()
+            history = History.query.all()
+            if len(history) > 0:
+                return redirect('/history')
+            else:
+                return redirect('/menu')
+        except Exception as e:
+            return render_template('error_page.html', message="[?] There was an issue deleting that event")
+    else:
+        return render_template('error_page.html', message='[!] You do not have permission to delete events')
+
+
+@app.route('/show/event_<int:id>')
+@login_required
+def show_event(id):
+    event_to_show = History.query.get_or_404(id)
+    return render_template('show_event.html', event=event_to_show)
 
 
 if __name__ == "__main__":

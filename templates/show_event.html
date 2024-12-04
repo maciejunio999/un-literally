@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<title>Test Master</title>
+{% endblock %}
+
+{% block body %}
+<div class="container_column">
+
+    <h1 style="color: #297400; font-size: 25px;">Selected event</h1>
+
+    <div class="info_block">
+        <p class="info_label">Event type:</p>
+        <p class="info_value">{{event.action}}</p>
+    </div>
+
+    <div class="info_block">
+        <p class="info_label">Date:</p>
+        <p class="info_value">{{event.date.strftime("%d %B %Y %H:%M")}}</p>
+    </div>
+
+    <div class="info_block">
+        <p class="info_label">User:</p>
+        <p class="info_value">{{event.user}}</p>
+    </div>
+
+    <div class="button-container">
+        <button class="back_button_v2" onclick="window.location='/history'">Back</button>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<title>Edit Word</title>
+{% endblock %}
+
+{% block body %}
+<div class="container_column">
+
+    <h1 style="color: #297400; font-size: 25px;">Edit Selected Word</h1>
+
+    <form action="/edit_word_{{word.id}}" method="POST">
+        <div class="info_block">
+            <p class="info_label">Word:</p>
+            <p class="info_value">{{word.content}}</p>
+        </div>
+
+        <div class="info_block">
+            <p class="info_label">Searched:</p>
+            <input type="number" name="searched" value="{{word.searched}}" class="description_area">
+        </div>
+
+        <div class="info_block">
+            <p class="info_label">Last search date:</p>
+            <p class="info_value">{{word.last_search.strftime("%d %B %Y %H:%M")}}</p>
+        </div>
+
+        {% if word.last_as_word_of_literally is not none %}
+            <div class="info_block">
+                <p class="info_label">Last time as word of literally:</p>
+                <p class="info_value">{{word.last_as_word_of_literally.strftime("%d %B %Y %H:%M")}}</p>
+            </div>
+        {% endif %}
+
+        <div class="info_block">
+            <p class="info_label">Source:</p>
+            <p class="info_value">{{word.source}}</p>
+            <p class="info_label">Added by:</p>
+            <p class="info_value">{{word.added_by}}</p>
+        </div>
+
+        <div class="info_block">
+            <p class="info_label">Definition:</p>
+            <textarea id="definition" name="definition" rows="15" cols="150" class="description_area">{{word.definition}}</textarea>
+        </div>
+
+        <div class="button-container">
+            <button type="submit" class="accept_button">Save Changes</button>
+            <button type="button" class="back_button_v2" onclick="window.location='/show/word_{{word.id}}'">Back</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

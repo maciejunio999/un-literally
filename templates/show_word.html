@@ -24,7 +24,7 @@
         <p class="info_value">{{word.last_search.strftime("%d %B %Y %H:%M")}}</p>
     </div>
 
-    {% if word.las_as_word_of_literally is not none %}
+    {% if word.last_as_word_of_literally is not none %}
         <div class="info_block">
             <p class="info_label">Last time as word of literally:</p>
             <p class="info_value">{{word.last_as_word_of_literally.strftime("%d %B %Y %H:%M")}}</p>
@@ -44,9 +44,7 @@
     </div>
 
     <div class="button-container">
-        <form action="/word_of_the_day_{{word.id}}" method="POST">
-            <button type="submit" class="accept_button">Accept</button>
-        </form>
+        <button type="submit" class="accept_button" onclick="window.location='/edit_word_{{word.id}}'">Edit</button>
         <button class="back_button_v2" onclick="window.location='/big_search'">Back</button>
     </div>
 </div>

@@ -27,7 +27,7 @@
     {% if word.last_as_word_of_literally is not none %}
         <div class="info_block">
             <p class="info_label">Last time as word of literally:</p>
-            <p class="info_value">{{word.last_as_word_of_literally.strftime("%d %B %Y %H:%M")}}</p>
+            <p class="info_value">{{word.last_as_word_of_literally.strftime("%d %B %Y")}}</p>
         </div>
     {% endif %}
 
@@ -43,8 +43,14 @@
         <textarea id="content" name="content" rows="15" cols="150" class="description_area" disabled>{{word.definition}}</textarea>
     </div>
 
+    {% if word.last_as_word_of_literally is none %}
+        <div class="container_column">
+            <button class="accept_button" onclick="window.location='/word_of_literally/{{word.id}}'">Word of literally</button>
+        </div>
+    {% endif %}
+
     <div class="button-container">
-        <button type="submit" class="accept_button" onclick="window.location='/edit_word_{{word.id}}'">Edit</button>
+        <button class="accept_button" onclick="window.location='/edit_word_{{word.id}}'">Edit</button>
         <button class="back_button_v2" onclick="window.location='/big_search'">Back</button>
     </div>
 </div>

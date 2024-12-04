@@ -3,19 +3,67 @@
 {% block head %}
 <title>Un-Literally</title>
 <style>
+  body {
+    background-color: #ffffff; /* Ustaw jednolite białe tło strony */
+  }
+
   table {
-    border-collapse: collapse; /* Ensure that borders don't collapse */
-    width: 100%; /* Full width of table */
+    border-collapse: collapse; /* Upewnij się, że granice tabeli nie nachodzą na siebie */
+    width: 100%; /* Szerokość tabeli na całą stronę */
   }
   
   th, td {
-    text-align: left; /* Align table content to the left */
-    border: 1px solid #297400; /* Add visible vertical lines */
-    padding: 8px; /* Padding for readability */
+    text-align: left; /* Tekst w tabeli wyrównany do lewej */
+    border: 1px solid #297400; /* Dodaj widoczne pionowe linie */
+    padding: 8px; /* Dodaj odstęp dla czytelności */
   }
 
   th {
-    background-color: #f2f2f2; /* Slightly different background color for headers */
+    background-color: #f2f2f2; /* Lekko inny kolor tła dla nagłówków */
+  }
+
+  .pagination {
+    display: flex;
+    justify-content: center;
+    list-style: none;
+    padding-left: 0;
+  }
+
+  .pagination li {
+    margin: 0 5px;
+  }
+
+  .pagination a {
+    text-decoration: none;
+    padding: 10px 15px;
+    color: #297400; /* Kolor zielony dla tekstu przycisków */
+    border: 1px solid #297400;
+    border-radius: 4px;
+  }
+
+  .pagination a:hover {
+    background-color: #297400;
+    color: #ffffff;
+  }
+
+  .pagination .active a {
+    background-color: #297400;
+    color: #ffffff;
+    pointer-events: none;
+  }
+
+  .back_button {
+    background-color: #297400;
+    color: #ffffff;
+    padding: 10px 20px;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    margin: 15px 0;
+  }
+
+  .back_button:hover {
+    background-color: #225c00;
   }
 </style>
 {% endblock %}
@@ -24,26 +72,30 @@
 {% block body %}
 <h1 style="text-align: center; color: #297400; font-family: Arial; font-weight: bold;">Un-Literally</h1>
 <h2 style="text-align: center; color: #297400; text-decoration: underline; font-family: Arial; font-weight: bold;">Words</h2>
-<button class="back_button" onclick="window.location='/menu'">Back</button>
+<div style="text-align: center;">
+    <button class="back_button" onclick="window.location='/menu'">Back</button>
+</div>
 {% endblock %}
 
 {% block content %}
-  <table id="data" class="table table-striped">
-    <thead>
-      <tr>
-        <th>Content</th>
-        <th>Searched</th>
-        <th>Definition</th>
-        <th>Last search</th>
-        <th>LWD</th>
-        <th>LWL</th>
-        <th>Source</th>
-        <th>Added by</th>
-      </tr>
-    </thead>
-    <tbody>
-    </tbody>
-  </table>
+  <div class="container">
+    <table id="data" class="table table-striped">
+      <thead>
+        <tr>
+          <th>Content</th>
+          <th>Searched</th>
+          <th>Definition</th>
+          <th>Last search</th>
+          <th>LWD</th>
+          <th>LWL</th>
+          <th>Source</th>
+          <th>Added by</th>
+        </tr>
+      </thead>
+      <tbody>
+      </tbody>
+    </table>
+  </div>
 {% endblock %}
 
 {% block scripts %}
@@ -62,6 +114,7 @@
           {data: 'source', orderable: false, searchable: false},
           {data: 'added_by', orderable: false, searchable: false}
         ],
+        pagingType: "simple_numbers", // Typ paginacji
       });
     });
   </script>

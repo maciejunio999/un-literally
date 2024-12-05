@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block head %}
-<title>Edit Word</title>
+<title>Un-literally</title>
 {% endblock %}
 
 {% block body %}
@@ -29,6 +29,8 @@
             <div class="info_block">
                 <p class="info_label">Last time as word of literally:</p>
                 <p class="info_value">{{word.last_as_word_of_literally.strftime("%d %B %Y %H:%M")}}</p>
+                <input type="checkbox" id="clear_last_as_word" name="clear_last_as_word">
+                <label for="clear_last_as_word">Clear Last time as word of literally</label>
             </div>
         {% endif %}
 

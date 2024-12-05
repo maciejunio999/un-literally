@@ -447,7 +447,10 @@ def edit_word(id):
         try:
             word_to_edit.searched = request.form.get('searched', word_to_edit.searched)
             word_to_edit.definition = request.form.get('definition', word_to_edit.definition)
-            word_to_edit.source += f"Also changed by {session['username']}"
+            word_to_edit.source += f" Also changed by {session['username']}"
+
+            if 'clear_last_as_word' in request.form:
+                word_to_edit.last_as_word_of_literally = None
 
             db.session.commit()
 
@@ -475,31 +478,37 @@ def edit_word(id):
         return render_template('edit_word.html', word=word_to_edit)
 
 
+
 @app.route('/word_of_literally/<int:id>')
 @login_required
 def word_of_literally(id):
     word_to_edit = Word.query.get_or_404(id)
-    if word_to_edit:
-        word_to_edit.last_as_word_of_literally = datetime.utcnow()
-        try:
-            db.session.commit()
-            return render_template('loading_page.html')
-        except Exception as e:
-            db.session.rollback()
-            payload = {
-                "error": str(e),
-                "word_id": id,
-                "username": session.get('username', 'unknown'),
-                "timestamp": datetime.utcnow().isoformat()
-            }
-            try:
-                response = requests.post("http://127.0.0.1:80/log_exception", json=payload)
-                response.raise_for_status()
-            except requests.exceptions.RequestException as req_e:
-                current_app.logger.error(f"Failed to make a call to logging endpoint: {req_e}")
-            return render_template('error_page.html', message="[?] There was an issue adding word as LWL")
+    word_today = Word.query.filter(func.date(Word.last_as_word_of_literally) == datetime.utcnow().date()).all()
+    if word_today:
+        return render_template('error_page.html', message=f"[!] Word of the literally has been found for today and it is {word_today.content}")
     else:
-        return render_template('error_page.html', message="[!] There is something wrong with this word")
+        if word_to_edit:
+            word_to_edit.last_as_word_of_literally = datetime.utcnow()
+            try:
+                db.session.commit()
+                return render_template('loading_page.html')
+            except Exception as e:
+                db.session.rollback()
+                payload = {
+                    "error": str(e),
+                    "word_id": id,
+                    "username": session.get('username', 'unknown'),
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+                try:
+                    response = requests.post("http://127.0.0.1:80/log_exception", json=payload)
+                    response.raise_for_status()
+                except requests.exceptions.RequestException as req_e:
+                    current_app.logger.error(f"Failed to make a call to logging endpoint: {req_e}")
+                return render_template('error_page.html', message="[?] There was an issue adding word as LWL")
+        else:
+            return render_template('error_page.html', message="[!] There is something wrong with this word")
+        
 
 
 # PROPOSALS

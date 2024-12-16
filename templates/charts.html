@@ -47,18 +47,18 @@
 
 
     <div class="d-flex justify-content-center mb-3">
-        <button class="btn btn-custom me-2" onclick="togglePlot('plot1', this)">Pokaż wykres nieposortowany</button>
-        <button class="btn btn-custom" onclick="togglePlot('plot2', this)">Pokaż wykres posortowany</button>
+        <button class="btn btn-custom me-2" onclick="togglePlot('plot1', this)">Show not sorted plot</button>
+        <button class="btn btn-custom" onclick="togglePlot('plot2', this)">Show sorted plot</button>
     </div>
 
     <div id="plot1" class="d-none">
-        <h4 class="text-center">Wykres nieposortowany</h4>
+        <h4 class="text-center">Not sorted plot</h4>
         {{ p_not_sorted[1] | safe }}
         {{ p_not_sorted[0] | safe }}
     </div>
 
     <div id="plot2" class="d-none mt-4">
-        <h4 class="text-center">Wykres posortowany</h4>
+        <h4 class="text-center">Sorted plot</h4>
         {{ p_sorted[1] | safe }}
         {{ p_sorted[0] | safe }}
     </div>
@@ -74,7 +74,7 @@
 
         if (plot.classList.contains('d-none')) {
             plot.classList.remove('d-none');
-            button.textContent = 'Schowaj wykres';
+            button.textContent = 'Hide plot';
         } else {
             plot.classList.add('d-none');
             button.textContent = button.dataset.defaultText;

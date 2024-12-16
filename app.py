@@ -889,10 +889,6 @@ def word_starting_with():
     p_not_sorted = [script, div]
 
     sorted_result = dict(sorted(result.items(), key=lambda x:x[1]))
-    print('r: ')
-    print(result)
-    print('sr: ')
-    print(sorted_result)
 
     sorted_letters = list(sorted_result.keys())
     sorted_values = list(sorted_result.values())
@@ -916,42 +912,114 @@ def word_starting_with():
     script, div = components(sorted_plot)
     p_sorted = [script, div]
 
-    return render_template('charts.html', chart=result, p_not_sorted=p_not_sorted, p_sorted=p_sorted, div=div)
+    return render_template('charts.html', p_not_sorted=p_not_sorted, p_sorted=p_sorted)
 
 
 @app.route('/unique_added_by_count')
 @login_required
 def unique_added_by_count():
     result = get_unique_added_by_count()
-    return render_template('charts.html', chart=result)
+    users = list(result.keys())
+    values = list(result.values())
+
+    not_sorted_plot = figure(
+        x_range=users,
+        height=500,
+        sizing_mode="stretch_width",
+        title="Number of words added by users",
+        toolbar_location=None, tools=""
+    )
+    
+    not_sorted_plot.vbar(x=users, top=values, width=0.8, color="navy", alpha=0.7)
+
+    not_sorted_plot.xgrid.grid_line_color = None
+    not_sorted_plot.y_range.start = 0
+    not_sorted_plot.xaxis.axis_label = "Users"
+    not_sorted_plot.yaxis.axis_label = "Count"
+    not_sorted_plot.xaxis.major_label_orientation = "horizontal"
+  
+    script, div = components(not_sorted_plot)
+    p_not_sorted = [script, div]
+
+    sorted_result = dict(sorted(result.items(), key=lambda x:x[1]))
+
+    sorted_users = list(sorted_result.keys())
+    sorted_values = list(sorted_result.values())
+
+    sorted_plot = figure(
+        x_range=sorted_users,
+        height=500,
+        sizing_mode="stretch_width",
+        title="Number of words added by users",
+        toolbar_location=None, tools=""
+    )
+    
+    sorted_plot.vbar(x=sorted_users, top=sorted_values, width=0.8, color="navy", alpha=0.7)
+
+    sorted_plot.xgrid.grid_line_color = None
+    sorted_plot.y_range.start = 0
+    sorted_plot.xaxis.axis_label = "Users"
+    sorted_plot.yaxis.axis_label = "Count"
+    sorted_plot.xaxis.major_label_orientation = "horizontal"
+  
+    script, div = components(sorted_plot)
+    p_sorted = [script, div]
+
+    return render_template('charts.html', p_not_sorted=p_not_sorted, p_sorted=p_sorted)
 
 
 @app.route('/top_10_most_searched')
 @login_required
 def top_10_most_searched():
     result = get_top_10_most_searched()
-    return render_template('charts.html', chart=result)
+    sorted_by_content = sorted(result, key=lambda x: x['content'])
+    content_x = [item['content'] for item in sorted_by_content]
+    searched_y = [item['searched'] for item in sorted_by_content]
+
+    p1 = figure(x_range=content_x, title="Words Sorted Alphabetically by 'content'", height=400, sizing_mode="stretch_width")
+    p1.vbar(x=content_x, top=searched_y, width=0.5, color="navy", alpha=0.7)
+    p1.xaxis.major_label_orientation = "horizontal"
+    p1.xaxis.axis_label = "Content"
+    p1.yaxis.axis_label = "Searched"
+
+    sorted_by_searched = sorted(result, key=lambda x: x['searched'], reverse=True)
+    content_x_sorted = [item['content'] for item in sorted_by_searched]
+    searched_y_sorted = [item['searched'] for item in sorted_by_searched]
+
+    p2 = figure(x_range=content_x_sorted, title="Words Sorted by 'searched' (Descending)", height=400, sizing_mode="stretch_width")
+    p2.vbar(x=content_x_sorted, top=searched_y_sorted, width=0.5, color="green", alpha=0.7)
+    p2.xaxis.major_label_orientation = "horizontal"
+    p2.xaxis.axis_label = "Content"
+    p2.yaxis.axis_label = "Searched"
+
+    script1, div1 = components(p1)
+    script2, div2 = components(p2)
+
+    p_not_sorted = [script1, div1]
+    p_sorted = [script2, div2]
+
+    return render_template('charts.html', p_not_sorted=p_not_sorted, p_sorted=p_sorted)
 
 
 @app.route('/top_10_latest_words_of_the_day')
 @login_required
 def top_10_latest_words_of_the_day():
     result = get_latest(column='LWD')
-    return render_template('charts.html', chart=result)
+    return render_template('charts.html', p_not_sorted=None, p_sorted=None)
 
 
 @app.route('/top_10_latest_words_of_literally')
 @login_required
 def top_10_latest_words_of_literally():
     result = get_latest(column='LWL')
-    return render_template('charts.html', chart=result)
+    return render_template('charts.html', p_not_sorted=None, p_sorted=None)
 
 
 @app.route('/top_10_latest_searched')
 @login_required
 def top_10_latest_searched():
     result = get_latest(column='LS')
-    return render_template('charts.html', chart=result)
+    return render_template('charts.html', p_not_sorted=None, p_sorted=None)
 
 
 if __name__ == "__main__":

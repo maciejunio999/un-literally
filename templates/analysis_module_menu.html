@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+
+{% block head %}
+    <title>Un-Literally</title>
+{% endblock %}
+
+
+{% block body %}
+
+<div class="menu_header">
+    <h1 style="text-align: center; color: #297400; font-family: Arial; font-weight: bold;">Un-Literally</h1>
+    <h2 style="text-align: center; color: #297400; text-decoration: underline; font-family: Arial; font-weight: bold;">Analysis module menu</h2>
+</div>
+
+<div class="name">
+    <hr>
+    <p>Analysis module</p>
+    <button class="menu_button" onclick="window.location='/word_starting_with'">Chart 1</button>
+    <br><br>
+    <p>Analysis module</p>
+    <button class="menu_button" onclick="window.location='/unique_added_by_count'">Chat 2</button>
+    <br><br>
+    <p>Analysis module</p>
+    <button class="menu_button" onclick="window.location='/top_10_most_searched'">Chat 3</button>
+    <br><br>
+    <p>Analysis module</p>
+    <button class="menu_button" onclick="window.location='/top_10_latest_words_of_the_day'">Chat 4</button>
+    <br><br>
+    <p>Analysis module</p>
+    <button class="menu_button" onclick="window.location='/top_10_latest_words_of_literally'">Chat 5</button>
+    <br><br>
+    <p>Analysis module</p>
+    <button class="menu_button" onclick="window.location='/top_10_latest_searched'">Chat 6</button>
+    <hr>
+    <button type="button" class="back_button" onclick="window.location='/menu'">Back</button>
+    <br><br>
+</div>
+
+</div>
+{% endblock %}

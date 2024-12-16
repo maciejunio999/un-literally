@@ -7,6 +7,8 @@ from datetime import datetime
 from flask_bcrypt import Bcrypt
 import requests
 from collections import defaultdict
+from bokeh.embed import components
+from bokeh.plotting import figure
 
 app = Flask(__name__)
 
@@ -777,8 +779,15 @@ def show_event(id):
 
 
 ###################################################################################################################################
-#   Extra module
+#   Analysis module
 ###################################################################################################################################
+
+
+# menu page
+@app.route('/analysis_module_menu', methods=['GET'])
+@login_required
+def analysis_module_menu():
+    return render_template('analysis_module_menu.html')
 
 
 def get_content_starts_with_count():
@@ -857,7 +866,57 @@ def get_latest(column):
 @login_required
 def word_starting_with():
     result = get_content_starts_with_count()
-    return render_template('charts.html', chart=result)
+    letters = list(result.keys())
+    values = list(result.values())
+
+    not_sorted_plot = figure(
+        x_range=letters,
+        height=500,
+        sizing_mode="stretch_width",
+        title="Number of Words Starting with Each Letter",
+        toolbar_location=None, tools=""
+    )
+    
+    not_sorted_plot.vbar(x=letters, top=values, width=0.8, color="navy", alpha=0.7)
+
+    not_sorted_plot.xgrid.grid_line_color = None
+    not_sorted_plot.y_range.start = 0
+    not_sorted_plot.xaxis.axis_label = "Letters"
+    not_sorted_plot.yaxis.axis_label = "Count"
+    not_sorted_plot.xaxis.major_label_orientation = "horizontal"
+  
+    script, div = components(not_sorted_plot)
+    p_not_sorted = [script, div]
+
+    sorted_result = dict(sorted(result.items(), key=lambda x:x[1]))
+    print('r: ')
+    print(result)
+    print('sr: ')
+    print(sorted_result)
+
+    sorted_letters = list(sorted_result.keys())
+    sorted_values = list(sorted_result.values())
+
+    sorted_plot = figure(
+        x_range=sorted_letters,
+        height=500,
+        sizing_mode="stretch_width",
+        title="Number of Words Starting with Each Letter",
+        toolbar_location=None, tools=""
+    )
+    
+    sorted_plot.vbar(x=sorted_letters, top=sorted_values, width=0.8, color="navy", alpha=0.7)
+
+    sorted_plot.xgrid.grid_line_color = None
+    sorted_plot.y_range.start = 0
+    sorted_plot.xaxis.axis_label = "Letters"
+    sorted_plot.yaxis.axis_label = "Count"
+    sorted_plot.xaxis.major_label_orientation = "horizontal"
+  
+    script, div = components(sorted_plot)
+    p_sorted = [script, div]
+
+    return render_template('charts.html', chart=result, p_not_sorted=p_not_sorted, p_sorted=p_sorted, div=div)
 
 
 @app.route('/unique_added_by_count')

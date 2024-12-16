@@ -1,11 +1,12 @@
 from flask import Flask, render_template, request, redirect, session, url_for, jsonify, current_app
 from flask_session import Session
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import func
+from sqlalchemy import func, desc
 from flask_login import UserMixin, LoginManager, login_user, login_required, logout_user, current_user
 from datetime import datetime
 from flask_bcrypt import Bcrypt
 import requests
+from collections import defaultdict
 
 app = Flask(__name__)
 
@@ -773,6 +774,125 @@ def delete_event(id):
 def show_event(id):
     event_to_show = History.query.get_or_404(id)
     return render_template('show_event.html', event=event_to_show)
+
+
+###################################################################################################################################
+#   Extra module
+###################################################################################################################################
+
+
+def get_content_starts_with_count():
+    results = defaultdict(int)  # Domyślny słownik z zerami
+    polski_alfabet = 'aąbcćdeęfghijklłmnńoópqrsśtuvwxyzźż'
+    for letter in polski_alfabet:
+        count = db.session.query(func.count()).filter(Word.content.like(f'{letter}%')).scalar()
+        if count > 0:
+            results[letter] = count
+    return dict(results)
+
+
+def get_unique_added_by_count():
+    query_result = db.session.query(Word.added_by, func.count(Word.added_by)).group_by(Word.added_by).all()
+    result = {added_by: count for added_by, count in query_result}
+    return result
+
+
+def get_top_10_most_searched():
+    query_result = db.session.query(Word).order_by(desc(Word.searched)).limit(10).all()
+    
+    if all(word.searched == 0 for word in query_result):
+        return False
+    
+    result = [
+        {
+            'id': word.id,
+            'content': word.content,
+            'searched': word.searched,
+            'definition': word.definition,
+            'source': word.source,
+            'added_by': word.added_by
+        }
+        for word in query_result
+    ]
+    return result
+
+
+def get_latest(column):
+    if column == 'LWD':
+        query_result = db.session.query(Word)\
+            .filter(Word.last_as_word_of_the_day.isnot(None))\
+            .order_by(desc(Word.last_as_word_of_the_day))\
+            .limit(10).all()
+    elif column == 'LWL':
+        query_result = db.session.query(Word)\
+            .filter(Word.last_as_word_of_literally.isnot(None))\
+            .order_by(desc(Word.last_as_word_of_literally))\
+            .limit(10).all()
+    elif column == 'LS':
+        query_result = db.session.query(Word)\
+            .filter(Word.last_search.isnot(None))\
+            .order_by(desc(Word.last_search))\
+            .limit(10).all()
+    
+    if not query_result:
+        return False
+
+    result = [
+        {
+            'id': word.id,
+            'content': word.content,
+            'last_as_word_of_the_day': word.last_as_word_of_the_day,
+            'last_as_word_of_literally': word.last_as_word_of_literally,
+            'last_search': word.last_search,
+            'definition': word.definition,
+            'source': word.source,
+            'added_by': word.added_by
+        }
+        for word in query_result
+    ]
+    return result
+
+
+@app.route('/word_starting_with')
+@login_required
+def word_starting_with():
+    result = get_content_starts_with_count()
+    return render_template('charts.html', chart=result)
+
+
+@app.route('/unique_added_by_count')
+@login_required
+def unique_added_by_count():
+    result = get_unique_added_by_count()
+    return render_template('charts.html', chart=result)
+
+
+@app.route('/top_10_most_searched')
+@login_required
+def top_10_most_searched():
+    result = get_top_10_most_searched()
+    return render_template('charts.html', chart=result)
+
+
+@app.route('/top_10_latest_words_of_the_day')
+@login_required
+def top_10_latest_words_of_the_day():
+    result = get_latest(column='LWD')
+    return render_template('charts.html', chart=result)
+
+
+@app.route('/top_10_latest_words_of_literally')
+@login_required
+def top_10_latest_words_of_literally():
+    result = get_latest(column='LWL')
+    return render_template('charts.html', chart=result)
+
+
+@app.route('/top_10_latest_searched')
+@login_required
+def top_10_latest_searched():
+    result = get_latest(column='LS')
+    return render_template('charts.html', chart=result)
 
 
 if __name__ == "__main__":

@@ -3,7 +3,7 @@ from flask_session import Session
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func, desc
 from flask_login import UserMixin, LoginManager, login_user, login_required, logout_user, current_user
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask_bcrypt import Bcrypt
 import requests
 from collections import defaultdict
@@ -999,6 +999,78 @@ def top_10_most_searched():
     p_sorted = [script2, div2]
 
     return render_template('charts.html', p_not_sorted=p_not_sorted, p_sorted=p_sorted)
+
+
+@app.route('/searched_words_per_day_17', methods=['GET'])
+@login_required
+def searched_words_per_day_17():
+    seventeen_days_ago = datetime.utcnow().date() - timedelta(days=17)
+
+    results_not_sorted = db.session.query(
+        func.date(Word.last_search).label('date'),
+        func.count(Word.id).label('count')
+    ).filter(
+        Word.last_search >= seventeen_days_ago
+    ).group_by(func.date(Word.last_search)).all()
+    
+    dates_not_sorted = [result.date for result in results_not_sorted]
+    counts_not_sorted = [result.count for result in results_not_sorted]
+
+    p_not_sorted = figure(
+        x_range=dates_not_sorted,
+        title="Liczba wyszukiwań słów każdego dnia (ostatnie 17 dni)",
+        x_axis_label="Data",
+        y_axis_label="Liczba wyszukiwań",
+        x_axis_type="datetime",
+        height=400,
+        width=800,
+        sizing_mode="stretch_width"
+    )
+
+    p_not_sorted.vbar(x=dates_not_sorted, top=counts_not_sorted, width=0.9, color="green", legend_label="Wyszukiwania")
+
+    p_not_sorted.xaxis.major_label_orientation = 0.8
+    p_not_sorted.legend.title = "Legenda"
+    p_not_sorted.legend.location = "top_left"
+
+    script_not_sorted, div_not_sorted = components(p_not_sorted)
+
+    results_sorted = db.session.query(
+        func.date(Word.last_search).label('date'),
+        func.count(Word.id).label('count')
+    ).filter(
+        Word.last_search != None
+    ).group_by(func.date(Word.last_search)) \
+     .order_by(func.count(Word.id).desc()) \
+     .limit(17).all()
+
+    dates_sorted = [result.date for result in results_sorted]
+    counts_sorted = [result.count for result in results_sorted]
+
+    p_sorted = figure(
+        x_range=dates_sorted,
+        title="Top 10 dni z największą liczbą wyszukiwań słów",
+        x_axis_label="Data",
+        y_axis_label="Liczba wyszukiwań",
+        x_axis_type="datetime",
+        height=400,
+        width=800,
+        sizing_mode="stretch_width"
+    )
+
+    p_sorted.vbar(x=dates_sorted, top=counts_sorted, width=0.9, color="blue", legend_label="Top dni")
+
+    p_sorted.xaxis.major_label_orientation = 0.8
+    p_sorted.legend.title = "Legenda"
+    p_sorted.legend.location = "top_left"
+
+    script_sorted, div_sorted = components(p_sorted)
+
+    p_not_sorted = [script_not_sorted, div_not_sorted]
+    p_sorted = [script_sorted, div_sorted]
+
+    return render_template('charts.html', p_not_sorted=p_not_sorted, p_sorted=p_sorted)
+
 
 
 @app.route('/top_10_latest_words_of_the_day')

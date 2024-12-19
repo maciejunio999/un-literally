@@ -9,6 +9,7 @@ import requests
 from collections import defaultdict
 from bokeh.embed import components
 from bokeh.plotting import figure
+from bokeh.models import DatetimeTickFormatter
 
 app = Flask(__name__)
 
@@ -1013,7 +1014,7 @@ def searched_words_per_day_17():
         Word.last_search >= seventeen_days_ago
     ).group_by(func.date(Word.last_search)).all()
     
-    dates_not_sorted = [result.date for result in results_not_sorted]
+    dates_not_sorted = [str(result.date) for result in results_not_sorted]
     counts_not_sorted = [result.count for result in results_not_sorted]
 
     p_not_sorted = figure(
@@ -1021,13 +1022,12 @@ def searched_words_per_day_17():
         title="Liczba wyszukiwań słów każdego dnia (ostatnie 17 dni)",
         x_axis_label="Data",
         y_axis_label="Liczba wyszukiwań",
-        x_axis_type="datetime",
-        height=400,
-        width=800,
+        height=500,
+        width=1000,
         sizing_mode="stretch_width"
     )
 
-    p_not_sorted.vbar(x=dates_not_sorted, top=counts_not_sorted, width=0.9, color="green", legend_label="Wyszukiwania")
+    p_not_sorted.vbar(x=dates_not_sorted, top=counts_not_sorted, width=0.5, color="green", legend_label="Wyszukiwania")
 
     p_not_sorted.xaxis.major_label_orientation = 0.8
     p_not_sorted.legend.title = "Legenda"
@@ -1042,9 +1042,9 @@ def searched_words_per_day_17():
         Word.last_search != None
     ).group_by(func.date(Word.last_search)) \
      .order_by(func.count(Word.id).desc()) \
-     .limit(17).all()
+     .limit(10).all()
 
-    dates_sorted = [result.date for result in results_sorted]
+    dates_sorted = [str(result.date) for result in results_sorted]
     counts_sorted = [result.count for result in results_sorted]
 
     p_sorted = figure(
@@ -1052,13 +1052,12 @@ def searched_words_per_day_17():
         title="Top 10 dni z największą liczbą wyszukiwań słów",
         x_axis_label="Data",
         y_axis_label="Liczba wyszukiwań",
-        x_axis_type="datetime",
-        height=400,
-        width=800,
+        height=500,
+        width=1000,
         sizing_mode="stretch_width"
     )
 
-    p_sorted.vbar(x=dates_sorted, top=counts_sorted, width=0.9, color="blue", legend_label="Top dni")
+    p_sorted.vbar(x=dates_sorted, top=counts_sorted, width=0.5, color="blue", legend_label="Top dni")
 
     p_sorted.xaxis.major_label_orientation = 0.8
     p_sorted.legend.title = "Legenda"

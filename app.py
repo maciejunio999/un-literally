@@ -670,7 +670,7 @@ def found_words():
     try:
         db.session.add(new_event)
         db.session.commit()
-        return render_template('found_words.html', words=matching_words)
+        return render_template('found_words.html', words=matching_words, previous_page='finder')
     except Exception as e:
         db.session.rollback()
         payload = {
@@ -687,9 +687,9 @@ def found_words():
         render_template('error_page.html', message=f"[?] There was an issue while looking for words")
 
 
-@app.route('/show/word_<int:id>', methods=['GET', 'POST'])
+@app.route('/show/word_<int:id>/<string:previous_page>', methods=['GET', 'POST'])
 @login_required
-def show_word(id):
+def show_word(id, previous_page):
     word_to_show = Word.query.get_or_404(id)
     word_to_show.searched += 1
     word_to_show.last_search = datetime.utcnow()
@@ -698,7 +698,7 @@ def show_word(id):
     try:
         db.session.add(new_event)
         db.session.commit()
-        return render_template('show_word.html', word=word_to_show)
+        return render_template('show_word.html', word=word_to_show, previous_page=previous_page)
     except Exception as e:
         db.session.rollback()
         payload = {
@@ -1042,7 +1042,7 @@ def searched_words_per_day_17():
         Word.last_search != None
     ).group_by(func.date(Word.last_search)) \
      .order_by(func.count(Word.id).desc()) \
-     .limit(10).all()
+     .limit(17).all()
 
     dates_sorted = [str(result.date) for result in results_sorted]
     counts_sorted = [result.count for result in results_sorted]
@@ -1082,8 +1082,14 @@ def top_10_latest_words_of_the_day():
 @app.route('/top_10_latest_words_of_literally')
 @login_required
 def top_10_latest_words_of_literally():
-    result = get_latest(column='LWL')
-    return render_template('charts.html', p_not_sorted=None, p_sorted=None)
+    column = request.args.get('column', 'LWL')
+    title = request.args.get('title', 'Dynamic Circle Page')
+    
+    result = get_latest(column=column)
+    sorted_words = sorted(result, key=lambda x: x['last_as_word_of_literally'], reverse=True)
+    print(sorted_words[0]['id'])
+
+    return render_template('bubbles.html', words=sorted_words, title=title, previous_page='LWL_chart')
 
 
 @app.route('/top_10_latest_searched')

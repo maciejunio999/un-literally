@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<title>Un-Literally</title>
+<style>
+
+    .circle-container {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-evenly;
+        gap: 20px;
+        margin-top: 20px;
+    }
+
+    .circle-wrapper {
+        position: relative;
+        width: 180px;
+        height: 180px;
+    }
+
+    .circle {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background-color: #297400;
+        color: white;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        font-size: 16px;
+        font-weight: bold;
+        text-align: center;
+        padding: 10px;
+        box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+        transition: transform 0.3s ease-in-out;
+        cursor: pointer;
+        position: relative;
+        z-index: 1;
+    }
+
+    .circle-wrapper a {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: block;
+        z-index: 2;
+    }
+
+    .circle:nth-child(even) {
+        margin-top: 30px;
+    }
+
+    .circle .content {
+        font-size: 20px;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+
+    .circle .date {
+        font-size: 14px;
+    }
+
+    .circle:hover {
+        transform: scale(1.05)
+    }
+
+    a {
+        text-decoration: none;
+    }
+
+</style>
+{% endblock %}
+
+{% block body %}
+
+<div class="menu_header">
+    <h1 style="text-align: center; color: #297400; font-family: Arial; font-weight: bold;">Un-Literally</h1>
+</div>
+
+<div class="container_column">
+    <h1 style="text-align: center; color: #297400;">{{ title }}</h1>
+    <div class="circle-container">
+        {% for word in words %}
+        <div class="circle-wrapper">
+            <a href="/show/word_{{ word['id'] }}/{{ previous_page }}"></a>
+            <div class="circle">
+                <div class="content">{{ word['content'] }}</div>
+                <div class="date">{{ word['last_as_word_of_literally'].strftime("%Y-%m-%d %H:%M:%S") }}</div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="container_column">
+    <button class="back_button" onclick="window.location='/analysis_module_menu'" style="margin-left: 10px; margin-top: 50px;">Back</button>
+</div>
+
+{% endblock %}

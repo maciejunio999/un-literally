@@ -618,16 +618,15 @@ def big_search():
             request.form.get('exactPlaceFilter5', '').lower()
         ]
 
-        exact_place_str = ",".join(exact_place_filters)
-        if ',,,,' == exact_place_str:
+        if not include_filter and not not_in_word_filter and all(not filter for filter in exact_place_filters):
             return render_template('big_search.html', x=True)
         else:
+            exact_place_str = ",".join(exact_place_filters)
             return redirect(url_for('found_words', 
-                                includeFilter=include_filter, 
-                                notInWordFilter=not_in_word_filter,
-                                exactPlaceFilters=exact_place_str))
+                                    includeFilter=include_filter, 
+                                    notInWordFilter=not_in_word_filter,
+                                    exactPlaceFilters=exact_place_str))
     return render_template('big_search.html')
-
 
 @app.route('/found_words', methods=['GET'])
 @login_required

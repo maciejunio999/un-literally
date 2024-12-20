@@ -43,7 +43,7 @@
         <textarea id="content" name="content" rows="15" cols="150" class="description_area" disabled>{{word.definition}}</textarea>
     </div>
 
-    {% if word.last_as_word_of_literally is none %}
+    {% if todays_last_as_word_of_literally %}
         <div class="container_column">
             <button class="accept_button" onclick="window.location='/word_of_literally/{{word.id}}'">Word of literally</button>
         </div>

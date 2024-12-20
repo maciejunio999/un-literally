@@ -9,7 +9,6 @@ import requests
 from collections import defaultdict
 from bokeh.embed import components
 from bokeh.plotting import figure
-from bokeh.models import DatetimeTickFormatter
 
 app = Flask(__name__)
 
@@ -693,11 +692,13 @@ def show_word(id, previous_page):
     word_to_show.searched += 1
     word_to_show.last_search = datetime.utcnow()
     new_event = History(action=f'Searched for word:{word_to_show.content}', user=session['username'])
-    
+    todays_last_as_word_of_literally = True
+    if word_to_show.last_as_word_of_literally == datetime.utcnow().date():
+        todays_last_as_word_of_literally = False
     try:
         db.session.add(new_event)
         db.session.commit()
-        return render_template('show_word.html', word=word_to_show, previous_page=previous_page)
+        return render_template('show_word.html', word=word_to_show, previous_page=previous_page, todays_last_as_word_of_literally=todays_last_as_word_of_literally)
     except Exception as e:
         db.session.rollback()
         payload = {

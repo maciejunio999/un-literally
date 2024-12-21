@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+
+{% block head %}
+    <title>Un-Literally</title>
+{% endblock %}
+
+
+{% block body %}
+
+<div class="menu_header">
+    <h1 style="text-align: center; color: #297400; font-family: Arial; font-weight: bold;">Un-Literally</h1>
+    <h2 style="text-align: center; color: #297400; text-decoration: underline; font-family: Arial; font-weight: bold;">Bubble schemas menu</h2>
+</div>
+
+<div class="name">
+    <hr>
+    <p>10 latest words of the day</p>
+    <button class="menu_button" onclick="window.location='/top_10_latest_words_of_the_day'">Chart 1</button>
+    <br><br>
+    <p>10 latest words of literally</p>
+    <button class="menu_button" onclick="window.location='/top_10_latest_words_of_literally'">Chart 2</button>
+    <br><br>
+    <p>10 latest searched</p>
+    <button class="menu_button" onclick="window.location='/top_10_latest_searched'">Chart 3</button>
+    <hr>
+    <button type="button" class="back_button" onclick="window.location='/menu'">Back</button>
+    <br><br>
+</div>
+
+</div>
+{% endblock %}

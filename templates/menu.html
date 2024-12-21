@@ -1,13 +1,31 @@
 {% extends 'base.html' %}
 
-
 {% block head %}
     <title>Un-Literally</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        .logout-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+        }
+
+        .logout-button i {
+            margin-right: 5px;
+        }
+    </style>
 {% endblock %}
 
-
 {% block body %}
-
 <div class="menu_header">
     <h1 style="text-align: center; color: #297400; font-family: Arial; font-weight: bold;">Un-Literally</h1>
     <h2 style="text-align: center; color: #297400; text-decoration: underline; font-family: Arial; font-weight: bold;">Menu</h2>
@@ -30,14 +48,18 @@
     <button class="menu_button" onclick="window.location='/admin_register'">Add User</button>
     <hr>
     <p>Analysis module</p>
-    <button class="menu_button" onclick="window.location='/analysis_module_menu'">Charts</button>
+    <button class="menu_button" onclick="window.location='/analysis_bar_plots_menu'">Plots</button>
+    <br><br>
+    <button class="menu_button" onclick="window.location='/analysis_bubbles_menu'">Bubbles</button>
     <hr>
     <p>Extra module</p>
     <button class="menu_button" onclick="window.location='/history'">History</button>
     <hr>
-    <button class="back_button" onclick="window.location='/logout'">Log out</button>
-    <br><br>
 </div>
 
-</div>
+<!-- Logout Button -->
+<button class="logout-button" onclick="window.location='/logout'">
+    <i class="fas fa-sign-out-alt"></i> Log out
+</button>
+
 {% endblock %}

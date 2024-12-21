@@ -8,8 +8,9 @@
         display: flex;
         flex-wrap: wrap;
         justify-content: space-evenly;
-        gap: 20px;
+        gap: 30px;
         margin-top: 20px;
+        margin-bottom: 20px;
     }
 
     .circle-wrapper {
@@ -88,7 +89,13 @@
             <a href="/show/word_{{ word['id'] }}/{{ previous_page }}"></a>
             <div class="circle">
                 <div class="content">{{ word['content'] }}</div>
-                <div class="date">{{ word['last_as_word_of_literally'].strftime("%Y-%m-%d %H:%M:%S") }}</div>
+                {% if column == 'LS' %}
+                    <div class="date">{{ word['last_search'].strftime("%Y-%m-%d %H:%M:%S") }}</div>
+                {% elif column == 'LWL' %}
+                    <div class="date">{{ word['last_as_word_of_literally'].strftime("%Y-%m-%d %H:%M:%S") }}</div>
+                {% elif column == 'LWD' %}
+                    <div class="date">{{ word['last_as_word_of_the_day'].strftime("%Y-%m-%d %H:%M:%S") }}</div>
+                {% endif %}
             </div>
         </div>
         {% endfor %}
@@ -96,7 +103,7 @@
 </div>
 
 <div class="container_column">
-    <button class="back_button" onclick="window.location='/analysis_module_menu'" style="margin-left: 10px; margin-top: 50px;">Back</button>
+    <button class="back_button" onclick="window.location='/analysis_bubbles_menu'" style="margin-left: 10px; margin-top: 25px;">Back</button>
 </div>
 
 {% endblock %}

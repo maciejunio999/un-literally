@@ -785,10 +785,17 @@ def show_event(id):
 
 
 # menu page
-@app.route('/analysis_module_menu', methods=['GET'])
+@app.route('/analysis_bar_plots_menu', methods=['GET'])
 @login_required
-def analysis_module_menu():
-    return render_template('analysis_module_menu.html')
+def analysis_bar_plots_menu():
+    return render_template('analysis_bar_plots_menu.html')
+
+
+# menu page
+@app.route('/analysis_bubbles_menu', methods=['GET'])
+@login_required
+def analysis_bubbles_menu():
+    return render_template('analysis_bubbles_menu.html')
 
 
 def get_content_starts_with_count():
@@ -866,6 +873,8 @@ def get_latest(column):
 @app.route('/word_starting_with')
 @login_required
 def word_starting_with():
+    title = request.args.get('title', 'Number of words starting with each letter')
+
     result = get_content_starts_with_count()
     letters = list(result.keys())
     values = list(result.values())
@@ -913,12 +922,14 @@ def word_starting_with():
     script, div = components(sorted_plot)
     p_sorted = [script, div]
 
-    return render_template('charts.html', p_not_sorted=p_not_sorted, p_sorted=p_sorted)
+    return render_template('charts.html', p_not_sorted=p_not_sorted, p_sorted=p_sorted, title=title)
 
 
 @app.route('/unique_added_by_count')
 @login_required
 def unique_added_by_count():
+    title = request.args.get('title', 'Number of words added by users')
+
     result = get_unique_added_by_count()
     users = list(result.keys())
     values = list(result.values())
@@ -966,12 +977,14 @@ def unique_added_by_count():
     script, div = components(sorted_plot)
     p_sorted = [script, div]
 
-    return render_template('charts.html', p_not_sorted=p_not_sorted, p_sorted=p_sorted)
+    return render_template('charts.html', p_not_sorted=p_not_sorted, p_sorted=p_sorted,title=title)
 
 
 @app.route('/top_10_most_searched')
 @login_required
 def top_10_most_searched():
+    title = request.args.get('title', 'Top 10 most searched words')
+
     result = get_top_10_most_searched()
     sorted_by_content = sorted(result, key=lambda x: x['content'])
     content_x = [item['content'] for item in sorted_by_content]
@@ -999,12 +1012,14 @@ def top_10_most_searched():
     p_not_sorted = [script1, div1]
     p_sorted = [script2, div2]
 
-    return render_template('charts.html', p_not_sorted=p_not_sorted, p_sorted=p_sorted)
+    return render_template('charts.html', p_not_sorted=p_not_sorted, p_sorted=p_sorted, title=title)
 
 
 @app.route('/searched_words_per_day_17', methods=['GET'])
 @login_required
 def searched_words_per_day_17():
+    title = request.args.get('title', 'Searched words per day, last 17 days')
+
     seventeen_days_ago = datetime.utcnow().date() - timedelta(days=17)
 
     results_not_sorted = db.session.query(
@@ -1068,35 +1083,45 @@ def searched_words_per_day_17():
     p_not_sorted = [script_not_sorted, div_not_sorted]
     p_sorted = [script_sorted, div_sorted]
 
-    return render_template('charts.html', p_not_sorted=p_not_sorted, p_sorted=p_sorted)
+    return render_template('charts.html', p_not_sorted=p_not_sorted, p_sorted=p_sorted, title=title)
 
 
 
 @app.route('/top_10_latest_words_of_the_day')
 @login_required
 def top_10_latest_words_of_the_day():
-    result = get_latest(column='LWD')
-    return render_template('charts.html', p_not_sorted=None, p_sorted=None)
+    column = request.args.get('column', 'LWD')
+    title = request.args.get('title', 'Latest Words of The Day')
+    
+    result = get_latest(column=column)
+    sorted_words = sorted(result, key=lambda x: x['last_as_word_of_the_day'], reverse=True)
+
+    return render_template('bubbles.html', words=sorted_words, title=title, previous_page='bubble', column=column)
 
 
 @app.route('/top_10_latest_words_of_literally')
 @login_required
 def top_10_latest_words_of_literally():
     column = request.args.get('column', 'LWL')
-    title = request.args.get('title', 'Dynamic Circle Page')
+    title = request.args.get('title', 'Latest Words of Literally')
     
     result = get_latest(column=column)
     sorted_words = sorted(result, key=lambda x: x['last_as_word_of_literally'], reverse=True)
-    print(sorted_words[0]['id'])
 
-    return render_template('bubbles.html', words=sorted_words, title=title, previous_page='LWL_chart')
+    return render_template('bubbles.html', words=sorted_words, title=title, previous_page='bubble', column=column)
 
 
 @app.route('/top_10_latest_searched')
 @login_required
 def top_10_latest_searched():
-    result = get_latest(column='LS')
-    return render_template('charts.html', p_not_sorted=None, p_sorted=None)
+    column = request.args.get('column', 'LS')
+    title = request.args.get('title', 'Latest Searched Words')
+    
+    result = get_latest(column=column)
+    sorted_words = sorted(result, key=lambda x: x['last_search'], reverse=True)
+    print(sorted_words[0]['last_search'])
+
+    return render_template('bubbles.html', words=sorted_words, title=title, previous_page='bubble', column=column)
 
 
 if __name__ == "__main__":

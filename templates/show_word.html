@@ -43,14 +43,16 @@
         <textarea id="content" name="content" rows="15" cols="150" class="description_area" disabled>{{word.definition}}</textarea>
     </div>
 
-    {% if todays_last_as_word_of_literally %}
+    {% if todays_last_as_word_of_literally and current_user.role_id != 3 %}
         <div class="container_column">
             <button class="accept_button" onclick="window.location='/word_of_literally/{{word.id}}'">Word of literally</button>
         </div>
     {% endif %}
 
     <div class="button-container">
+        {% if current_user.role_id == 1 %}
         <button class="accept_button" onclick="window.location='/edit_word_{{word.id}}'">Edit</button>
+        {% endif %}
         {% if previous_page == 'finder' %}
             <button class="back_button" onclick="window.location='/menu'" style="margin-left: 10px;">Back</button>
         {% elif previous_page == 'bubble' %}

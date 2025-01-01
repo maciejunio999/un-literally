@@ -104,8 +104,64 @@ def validate_word_content(content):
 
 
 ###################################################################################################################################
+#   Error handling
+###################################################################################################################################
+
+
+# function to log errors in History table
+@app.route('/log_exception', methods=['POST'])
+def log_exception():
+    try:
+        data = request.get_json()
+
+        error_message = data.get('error')
+        username = data.get('username', 'unknown')
+        #error_details = data.get('error_details')
+        timestamp = data.get('timestamp', datetime.utcnow().isoformat())
+
+        new_event = History(
+            action=f"Error occurred: {error_message}",
+            user=username,
+            date=datetime.fromisoformat(timestamp)
+        )
+
+        db.session.add(new_event)
+        db.session.commit()
+
+        return jsonify({"message": "Error logged successfully"}), 201
+
+    except Exception as e:
+        db.session.rollback()
+        payload = {
+            "error": str(e),
+            "username": session.get('username', 'unknown'),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        try:
+            response = requests.post("http://127.0.0.1:80/log_exception", json=payload)
+            response.raise_for_status()
+        except requests.exceptions.RequestException as req_e:
+            current_app.logger.error(f"Failed to make a call to logging endpoint: {req_e}")
+        return jsonify({"error": f"Failed to log error: {str(e)}"}), 500
+
+
+def log_exceptions(exception):
+    payload = {
+            "error": str(exception),
+            "username": session.get('username', 'unknown'),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    try:
+        response = requests.post("http://127.0.0.1:80/log_exception", json=payload)
+        response.raise_for_status()
+    except requests.exceptions.RequestException as req_e:
+        current_app.logger.error(f"Failed to make a call to logging endpoint: {req_e}")
+
+
+###################################################################################################################################
 #   Main pages
 ###################################################################################################################################
+
 
 # home page
 @app.route('/', methods=['POST', 'GET'])
@@ -120,6 +176,35 @@ def menu():
     return render_template('menu.html')
 
 
+# login page
+@app.route('/login', methods=['POST', 'GET'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username'].strip()
+        password = request.form['password'].strip()
+        user = User.query.filter_by(username=username).first()
+        if user:
+            if bcrypt.check_password_hash(user.password, password):
+                session['show_log_out'] = True
+                session['username'] = user.username
+                login_user(user)
+                new_event = History(action='Log in', user=session['username'])
+                try:
+                    db.session.add(new_event)
+                    db.session.commit()
+                    session['username_used']=False
+                    return redirect('/menu')
+                except Exception as e:
+                    db.session.rollback()
+                    log_exceptions(e)
+            else:
+                return render_template('login.html', y=True, x=False)
+        else:
+            return render_template('login.html', x=True, y=False)
+    else:
+        return render_template('login.html', x=False, y=False)
+
+
 @app.route('/logout', methods=['GET'])
 @login_required
 def logout():
@@ -132,103 +217,14 @@ def logout():
         session.clear()
         return redirect('/')
     except Exception as e:
-        db.session.rollback()
-        payload = {
-            "error": str(e),
-            "word_id": id,
-            "username": session.get('username', 'unknown'),
-            "timestamp": datetime.utcnow().isoformat()
-        }
-        try:
-            response = requests.post("http://127.0.0.1:80/log_exception", json=payload)
-            response.raise_for_status()
-        except requests.exceptions.RequestException as req_e:
-            current_app.logger.error(f"Failed to make a call to logging endpoint: {req_e}")
-        return render_template('error_page.html', message="[?] There was an issue adding new user")
-    
-
-
-# login page
-@app.route('/login', methods=['POST', 'GET'])
-def login():
-    if request.method == 'POST':
-        username = request.form['username'].strip()
-        password = request.form['password'].strip()
-        user = User.query.filter_by(username=username).first()
-        if user:
-            if bcrypt.check_password_hash(user.password, password):
-                session['show_log_out'] = True
-                session['username'] = user.username
-                session['role'] = user.role_id
-                login_user(user)
-                new_event = History(action='Log in', user=session['username'])
-                try:
-                    db.session.add(new_event)
-                    db.session.commit()
-                    session['username_used']=False
-                    return redirect('/menu')
-                except Exception as e:
-                    db.session.rollback()
-                    payload = {
-                        "error": str(e),
-                        "word_id": id,
-                        "username": session.get('username', 'unknown'),
-                        "timestamp": datetime.utcnow().isoformat()
-                    }
-                    try:
-                        response = requests.post("http://127.0.0.1:80/log_exception", json=payload)
-                        response.raise_for_status()
-                    except requests.exceptions.RequestException as req_e:
-                        current_app.logger.error(f"Failed to make a call to logging endpoint: {req_e}")
-                    return render_template('error_page.html', message="[?] There was an issue adding new user")
-            else:
-                return render_template('login.html', y=True, x=False)
-        else:
-            return render_template('login.html', x=True, y=False)
-    else:
-        return render_template('login.html', x=False, y=False)
-
-# function to log errors in History table
-@app.route('/log_exception', methods=['POST'])
-def log_exception():
-    try:
-        data = request.get_json()
-
-        error_message = data.get('error')
-        word_id = data.get('word_id')
-        username = data.get('username', 'unknown')
-        timestamp = data.get('timestamp', datetime.utcnow().isoformat())
-
-        new_event = History(
-            action=f"Error occurred for word_id {word_id}: {error_message}",
-            user=username,
-            date=datetime.fromisoformat(timestamp)
-        )
-
-        db.session.add(new_event)
-        db.session.commit()
-
-        return jsonify({"message": "Error logged successfully"}), 201
-
-    except Exception as e:
-        db.session.rollback()
-        payload = {
-            "error": str(e),
-            "word_id": id,
-            "username": session.get('username', 'unknown'),
-            "timestamp": datetime.utcnow().isoformat()
-        }
-        try:
-            response = requests.post("http://127.0.0.1:80/log_exception", json=payload)
-            response.raise_for_status()
-        except requests.exceptions.RequestException as req_e:
-            current_app.logger.error(f"Failed to make a call to logging endpoint: {req_e}")
-        return jsonify({"error": f"Failed to log error: {str(e)}"}), 500
+        log_exceptions(e)
+        return render_template('error_page.html', message="[?] There was an issue logging out")
 
 
 ###################################################################################################################################
 #   Users module
 ###################################################################################################################################
+
 
 # register page
 @app.route('/admin_register', methods=['POST', 'GET'])
@@ -255,21 +251,12 @@ def admin_register():
                     return redirect('/menu')
                 except Exception as e:
                     db.session.rollback()
-                    payload = {
-                        "error": str(e),
-                        "word_id": id,
-                        "username": session.get('username', 'unknown'),
-                        "timestamp": datetime.utcnow().isoformat()
-                    }
-                    try:
-                        response = requests.post("http://127.0.0.1:80/log_exception", json=payload)
-                        response.raise_for_status()
-                    except requests.exceptions.RequestException as req_e:
-                        current_app.logger.error(f"Failed to make a call to logging endpoint: {req_e}")
+                    log_exceptions(e)
                     return render_template('error_page.html', message="[?] There was an issue adding new user")
         else:
             return render_template('admin_register.html', show_hidden=False)
     else:
+        log_exceptions(e)
         return render_template('error_page.html', message="[!] You dont have permission to add new users")
 
 
@@ -281,7 +268,9 @@ def all_users():
         users = User.query.order_by(User.username).all()
         return render_template('all_users.html', users=users, id=current_user.id)
     else:
-        return render_template('error_page.html', message="[!] You dont have permission to add new users")
+        e = "[!] You dont have permission to add new users"
+        log_exceptions(e)
+        return render_template('error_page.html', message=e)
 
 
 @app.route('/update/user_<int:id>', methods=['GET', 'POST'])
@@ -321,22 +310,14 @@ def update_user(id):
                 return redirect('/all_users')
             except Exception as e:
                 db.session.rollback()
-                payload = {
-                    "error": str(e),
-                    "word_id": id,
-                    "username": session.get('username', 'unknown'),
-                    "timestamp": datetime.utcnow().isoformat()
-                }
-                try:
-                    response = requests.post("http://127.0.0.1:80/log_exception", json=payload)
-                    response.raise_for_status()
-                except requests.exceptions.RequestException as req_e:
-                    current_app.logger.error(f"Failed to make a call to logging endpoint: {req_e}")
-                return render_template('error_page.html', message=f"[?] There was an issue updating that user: {str(e)}")
+                log_exceptions(e)
+                return render_template('error_page.html', message=e)
         else:
             return render_template('edit_user.html', user=user_to_update)
     else:
-        return render_template('error_page.html', message='[!] You do not have permission to edit users.')
+        e = '[!] You do not have permission to edit users.'
+        log_exceptions(e)
+        return render_template('error_page.html', message=e)
 
 
 # page where we delete user from database
@@ -358,22 +339,16 @@ def delete_user(id):
                     return redirect('/menu')
             except Exception as e:
                 db.session.rollback()
-                payload = {
-                    "error": str(e),
-                    "word_id": id,
-                    "username": session.get('username', 'unknown'),
-                    "timestamp": datetime.utcnow().isoformat()
-                }
-                try:
-                    response = requests.post("http://127.0.0.1:80/log_exception", json=payload)
-                    response.raise_for_status()
-                except requests.exceptions.RequestException as req_e:
-                    current_app.logger.error(f"Failed to make a call to logging endpoint: {req_e}")
+                log_exceptions(e)
                 return render_template('error_page.html', message="[?] There was an issue deleting that user")
         else:
-            return render_template('error_page.html', message='[!] You do not have permission to delete users')
+            e = '[!] You do not have permission to delete users'
+            log_exceptions(e)
+            return render_template('error_page.html', message=e)
     else:
-        return render_template('error_page.html', message='[!] You cannot delete own user')
+        e = '[!] You cannot delete own user'
+        log_exceptions(e)
+        return render_template('error_page.html', message=e)
 
 
 ###################################################################################################################################
@@ -386,7 +361,11 @@ def delete_user(id):
 @app.route('/all_words', methods=['POST','GET'])
 @login_required
 def all_words():
-    return render_template('all_words.html')
+    try:
+        return render_template('all_words.html')
+    except Exception as e:
+        log_exceptions(e)
+        return render_template('error_page.html', message=e)
 
 
 # get data for all_words page
@@ -410,7 +389,7 @@ def add_word():
             session['word_already_exists']=True
             return render_template('add_word.html')
         else:
-            if 1 == session['role']:
+            if 1 == current_user.role_id:
                 new_event = History(action=f'Added new word: {content}', user=session['username'])
                 new_word = Word(content=content, searched=searched, definition=definition, source=source, added_by=added_by)
             else:
@@ -424,18 +403,8 @@ def add_word():
                 return redirect('/menu')
             except Exception as e:
                 db.session.rollback()
-                payload = {
-                    "error": str(e),
-                    "word_id": id,
-                    "username": session.get('username', 'unknown'),
-                    "timestamp": datetime.utcnow().isoformat()
-                }
-                try:
-                    response = requests.post("http://127.0.0.1:80/log_exception", json=payload)
-                    response.raise_for_status()
-                except requests.exceptions.RequestException as req_e:
-                    current_app.logger.error(f"Failed to make a call to logging endpoint: {req_e}")
-                return 'There was an issue adding your test'
+                log_exceptions(e)
+                return render_template('error_page.html', message=f"[?] There was an issue adding word: {str(e)}")
     else:
         session['word_already_exists']=False
         return render_template('add_word.html')
@@ -444,74 +413,64 @@ def add_word():
 @app.route('/edit_word_<int:id>', methods=['GET', 'POST'])
 @login_required
 def edit_word(id):
-    word_to_edit = Word.query.get_or_404(id)
-
-    if request.method == 'POST':
-        try:
-            word_to_edit.searched = request.form.get('searched', word_to_edit.searched)
-            word_to_edit.definition = request.form.get('definition', word_to_edit.definition)
-            word_to_edit.source += f" Also changed by {session['username']}"
-
-            if 'clear_last_as_word' in request.form:
-                word_to_edit.last_as_word_of_literally = None
-
-            db.session.commit()
-
-            new_event = History(action=f'Edited word: {word_to_edit.content}', user=session['username'])
-            db.session.add(new_event)
-            db.session.commit()
-
-            return redirect(url_for('big_search'))
-
-        except Exception as e:
-            db.session.rollback()
-            payload = {
-                "error": str(e),
-                "word_id": id,
-                "username": session.get('username', 'unknown'),
-                "timestamp": datetime.utcnow().isoformat()
-            }
+    if 1 == current_user.role_id:
+        word_to_edit = Word.query.get_or_404(id)
+        if request.method == 'POST':
             try:
-                response = requests.post("http://127.0.0.1:80/log_exception", json=payload)
-                response.raise_for_status()
-            except requests.exceptions.RequestException as req_e:
-                current_app.logger.error(f"Failed to make a call to logging endpoint: {req_e}")
-            return render_template('error_page.html', message=f"[?] There was an issue updating this word: {str(e)}")
+                word_to_edit.searched = request.form.get('searched', word_to_edit.searched)
+                word_to_edit.definition = request.form.get('definition', word_to_edit.definition)
+                word_to_edit.source += f" Also changed by {session['username']}"
+
+                if 'clear_last_as_word' in request.form:
+                    word_to_edit.last_as_word_of_literally = None
+
+                new_event = History(action=f'Edited word: {word_to_edit.content}', user=session['username'])
+                db.session.add(new_event)
+                db.session.commit()
+
+                return redirect(url_for('big_search'))
+
+            except Exception as e:
+                db.session.rollback()
+                log_exceptions(e)
+                return render_template('error_page.html', message=f"[?] There was an issue updating this word: {str(e)}")
+        else:
+            return render_template('edit_word.html', word=word_to_edit)
     else:
-        return render_template('edit_word.html', word=word_to_edit)
+        e = "[!] You don't have permission to edit words"
+        log_exceptions(e)
+        return render_template('error_page.html', message=e)
 
 
 
 @app.route('/word_of_literally/<int:id>')
 @login_required
 def word_of_literally(id):
-    word_to_edit = Word.query.get_or_404(id)
-    word_today = Word.query.filter(func.date(Word.last_as_word_of_literally) == datetime.utcnow().date()).all()
-    if word_today:
-        return render_template('error_page.html', message=f"[!] Word of the literally has been found for today and it is {word_today.content}")
-    else:
-        if word_to_edit:
-            word_to_edit.last_as_word_of_literally = datetime.utcnow()
-            try:
-                db.session.commit()
-                return render_template('loading_page.html')
-            except Exception as e:
-                db.session.rollback()
-                payload = {
-                    "error": str(e),
-                    "word_id": id,
-                    "username": session.get('username', 'unknown'),
-                    "timestamp": datetime.utcnow().isoformat()
-                }
-                try:
-                    response = requests.post("http://127.0.0.1:80/log_exception", json=payload)
-                    response.raise_for_status()
-                except requests.exceptions.RequestException as req_e:
-                    current_app.logger.error(f"Failed to make a call to logging endpoint: {req_e}")
-                return render_template('error_page.html', message="[?] There was an issue adding word as LWL")
+    if current_user.role_id != 3:
+        word_to_edit = Word.query.get_or_404(id)
+        word_today = Word.query.filter(func.date(Word.last_as_word_of_literally) == datetime.utcnow().date()).all()
+        if word_today:
+            e = f"[!] Word of the literally has been found for today and it is {word_today.content}"
+            log_exceptions(e)
+            return render_template('error_page.html', message=e)
         else:
-            return render_template('error_page.html', message="[!] There is something wrong with this word")
-        
+            if word_to_edit:
+                word_to_edit.last_as_word_of_literally = datetime.utcnow()
+                try:
+                    db.session.commit()
+                    return render_template('loading_page.html')
+                except Exception as e:
+                    db.session.rollback()
+                    log_exceptions(e)
+                    return render_template('error_page.html', message="[?] There was an issue adding word as LWL")
+            else:
+                e = "[!] There is something wrong with this word"
+                log_exceptions(e)
+                return render_template('error_page.html', message=e)
+    else:
+        e = '[!] You do not have permission to mark word'
+        log_exceptions(e)
+        return render_template('error_page.html', message=e)
 
 
 # PROPOSALS
@@ -519,8 +478,17 @@ def word_of_literally(id):
 @app.route('/all_proposals')
 @login_required
 def proposals():
-    proposals = Proposal.query.order_by(Proposal.date).all()
-    return render_template('all_proposals.html', proposals=proposals)
+    if 1 == current_user.role_id:
+        try:
+            proposals = Proposal.query.order_by(Proposal.date).all()
+            return render_template('all_proposals.html', proposals=proposals)
+        except Exception as e:
+            log_exceptions(e)
+            return render_template('error_page.html', message=e)
+    else:
+        e = "[!] You don't have permission to see list of proposals"
+        log_exceptions(e)
+        return render_template('error_page.html', message=e)
 
 
 @app.route('/delete/proposal_<int:id>')
@@ -540,28 +508,28 @@ def delete_proposal(id):
                 return redirect('/menu')
         except Exception as e:
             db.session.rollback()
-            payload = {
-                "error": str(e),
-                "word_id": id,
-                "username": session.get('username', 'unknown'),
-                "timestamp": datetime.utcnow().isoformat()
-            }
-            try:
-                response = requests.post("http://127.0.0.1:80/log_exception", json=payload)
-                response.raise_for_status()
-            except requests.exceptions.RequestException as req_e:
-                current_app.logger.error(f"Failed to make a call to logging endpoint: {req_e}")
+            log_exceptions(e)
             return render_template('error_page.html', message="[?] There was an issue deleting that proposal")
     else:
-        return render_template('error_page.html', message='[!] You do not have permission to delete proposals')
+        e = '[!] You do not have permission to delete proposals'
+        log_exceptions(e)
+        return render_template('error_page.html', message=e)
 
 
 @app.route('/show/proposal_<int:id>')
 @login_required
 def show_proposal(id):
-    proposal_to_show = Proposal.query.get_or_404(id)
-    return render_template('show_proposal.html', proposal=proposal_to_show)
-
+    if 1 == current_user.role_id:
+        try:
+            proposal_to_show = Proposal.query.get_or_404(id)
+            return render_template('show_proposal.html', proposal=proposal_to_show)
+        except Exception as e:
+            log_exceptions(e)
+            return render_template('error_page.html', message="[?] There is not such proposal in database")
+    else:
+        e = "[!] You don't have permission to look into proposals"
+        log_exceptions(e)
+        return render_template('error_page.html', message=e)
 
 @app.route('/accept_proposal_<int:id>', methods=['POST','GET'])
 @login_required
@@ -587,20 +555,15 @@ def accept_proposal(id):
                 return redirect('/menu')
         except Exception as e:
             db.session.rollback()
-            payload = {
-                "error": str(e),
-                "word_id": id,
-                "username": session.get('username', 'unknown'),
-                "timestamp": datetime.utcnow().isoformat()
-            }
-            try:
-                response = requests.post("http://127.0.0.1:80/log_exception", json=payload)
-                response.raise_for_status()
-            except requests.exceptions.RequestException as req_e:
-                current_app.logger.error(f"Failed to make a call to logging endpoint: {req_e}")
-            return render_template('error_page.html', message="[?] There was an issue deleting that proposal")
+            log_exceptions(e)
+            return render_template('error_page.html', message="[?] There was an issue accepting that proposal")
     else:
-        return render_template('error_page.html', message='[!] You do not have permission to accept proposals')
+        e = '[!] You do not have permission to accept proposals'
+        log_exceptions(e)
+        return render_template('error_page.html', message=e)
+
+
+# WORD SEARCH
 
 
 @app.route('/big_search', methods=['POST', 'GET'])
@@ -626,6 +589,7 @@ def big_search():
                                     notInWordFilter=not_in_word_filter,
                                     exactPlaceFilters=exact_place_str))
     return render_template('big_search.html')
+
 
 @app.route('/found_words', methods=['GET'])
 @login_required
@@ -671,17 +635,7 @@ def found_words():
         return render_template('found_words.html', words=matching_words, previous_page='finder')
     except Exception as e:
         db.session.rollback()
-        payload = {
-            "error": str(e),
-            "word_id": id,
-            "username": session.get('username', 'unknown'),
-            "timestamp": datetime.utcnow().isoformat()
-        }
-        try:
-            response = requests.post("http://127.0.0.1:80/log_exception", json=payload)
-            response.raise_for_status()
-        except requests.exceptions.RequestException as req_e:
-            current_app.logger.error(f"Failed to make a call to logging endpoint: {req_e}")
+        log_exceptions(e)
         render_template('error_page.html', message=f"[?] There was an issue while looking for words")
 
 
@@ -701,19 +655,9 @@ def show_word(id, previous_page):
         return render_template('show_word.html', word=word_to_show, previous_page=previous_page, todays_last_as_word_of_literally=todays_last_as_word_of_literally)
     except Exception as e:
         db.session.rollback()
-        payload = {
-            "error": str(e),
-            "word_id": id,
-            "username": session.get('username', 'unknown'),
-            "timestamp": datetime.utcnow().isoformat()
-        }
-        try:
-            response = requests.post("http://127.0.0.1:80/log_exception", json=payload)
-            response.raise_for_status()
-        except requests.exceptions.RequestException as req_e:
-            current_app.logger.error(f"Failed to make a call to logging endpoint: {req_e}")
-
+        log_exceptions(e)
         return render_template('error_page.html', message=f"[?] There was an issue showing this word: {str(e)}")
+
 
 ###################################################################################################################################
 #   Extra module
@@ -723,35 +667,42 @@ def show_word(id, previous_page):
 @app.route('/history', methods=['GET'])
 @login_required
 def history():
-    events = History.query.order_by(History.date.desc()).all()
-    return render_template('history.html', events=events)
+    if 1 == current_user.role_id:
+        try:
+            events = History.query.order_by(History.date.desc()).all()
+            return render_template('history.html', events=events)
+        except Exception as e:
+            log_exceptions(e)
+            return render_template('error_page.html', message=f"[?] There was an issue: {str(e)}")
+    else:
+        e = '[!] You do not have permission to look into history'
+        log_exceptions(e)
+        return render_template('error_page.html', message=e)
 
 
 @app.route('/delete/events')
 @login_required
 def deleting():
-    events = History.query.order_by(History.date).all()
-    if events:
-        try:
-            History.query.delete()
-            db.session.commit()
-            return render_template('loading_page.html')
-        except Exception as e:
-            db.session.rollback()
-            payload = {
-                "error": str(e),
-                "word_id": id,
-                "username": session.get('username', 'unknown'),
-                "timestamp": datetime.utcnow().isoformat()
-            }
+    if 1 == current_user.role_id:
+        events = History.query.order_by(History.date).all()
+        if events:
             try:
-                response = requests.post("http://127.0.0.1:80/log_exception", json=payload)
-                response.raise_for_status()
-            except requests.exceptions.RequestException as req_e:
-                current_app.logger.error(f"Failed to make a call to logging endpoint: {req_e}")
-            return render_template('error_page.html', message="[?] There was an issue deleting history")
+                History.query.delete()
+                db.session.commit()
+                return render_template('loading_page.html')
+            except Exception as e:
+                db.session.rollback()
+                log_exceptions(e)
+                return render_template('error_page.html', message="[?] There was an issue deleting history")
+        else:
+            e = "[!] There is no history in database"
+            log_exceptions(e)
+            return render_template('error_page.html', message=e)
     else:
-        return render_template('error_page.html', message="[!] There is no history in database")
+        e = '[!] You do not have permission to delete history'
+        log_exceptions(e)
+        return render_template('error_page.html', message=e)
+
 
 @app.route('/delete/event_<int:id>')
 @login_required
@@ -767,35 +718,34 @@ def delete_event(id):
             else:
                 return redirect('/menu')
         except Exception as e:
+            db.session.rollback()
+            log_exceptions(e)
             return render_template('error_page.html', message="[?] There was an issue deleting that event")
     else:
-        return render_template('error_page.html', message='[!] You do not have permission to delete events')
+        e = '[!] You do not have permission to delete events'
+        log_exceptions(e)
+        return render_template('error_page.html', message=e)
 
 
 @app.route('/show/event_<int:id>')
 @login_required
 def show_event(id):
-    event_to_show = History.query.get_or_404(id)
-    return render_template('show_event.html', event=event_to_show)
+    if 1 == current_user.role_id:
+        try:
+            event_to_show = History.query.get_or_404(id)
+            return render_template('show_event.html', event=event_to_show)
+        except Exception as e:
+            log_exceptions(e)
+            return render_template('error_page.html', message=f"[?] There was an issue: {str(e)}")
+    else:
+        e = '[!] You do not have permission to look into history events'
+        log_exceptions(e)
+        return render_template('error_page.html', message=e)
 
 
 ###################################################################################################################################
 #   Analysis module
 ###################################################################################################################################
-
-
-# menu page
-@app.route('/analysis_bar_plots_menu', methods=['GET'])
-@login_required
-def analysis_bar_plots_menu():
-    return render_template('analysis_bar_plots_menu.html')
-
-
-# menu page
-@app.route('/analysis_bubbles_menu', methods=['GET'])
-@login_required
-def analysis_bubbles_menu():
-    return render_template('analysis_bubbles_menu.html')
 
 
 def get_content_starts_with_count():
@@ -870,258 +820,358 @@ def get_latest(column):
     return result
 
 
+# menu page
+@app.route('/analysis_bar_plots_menu', methods=['GET'])
+@login_required
+def analysis_bar_plots_menu():
+    if current_user.role_id != 3:
+        try:
+            return render_template('analysis_bar_plots_menu.html')
+        except Exception as e:
+            log_exceptions(e)
+            return render_template('error_page.html', message=f"[?] There was an issue: {str(e)}")
+    else:
+        e = '[!] You do not have permission to see analysis module'
+        log_exceptions(e)
+        return render_template('error_page.html', message=e)
+
+
+# CHARTS
+
+
 @app.route('/word_starting_with')
 @login_required
 def word_starting_with():
-    title = request.args.get('title', 'Number of words starting with each letter')
+    if current_user.role_id != 3:
+        try:
+            title = request.args.get('title', 'Number of words starting with each letter')
 
-    result = get_content_starts_with_count()
-    letters = list(result.keys())
-    values = list(result.values())
+            result = get_content_starts_with_count()
+            letters = list(result.keys())
+            values = list(result.values())
 
-    not_sorted_plot = figure(
-        x_range=letters,
-        height=500,
-        sizing_mode="stretch_width",
-        title="Number of Words Starting with Each Letter",
-        toolbar_location=None, tools=""
-    )
-    
-    not_sorted_plot.vbar(x=letters, top=values, width=0.8, color="navy", alpha=0.7)
+            not_sorted_plot = figure(
+                x_range=letters,
+                height=500,
+                sizing_mode="stretch_width",
+                title="Number of Words Starting with Each Letter",
+                toolbar_location=None, tools=""
+            )
+            
+            not_sorted_plot.vbar(x=letters, top=values, width=0.8, color="navy", alpha=0.7)
 
-    not_sorted_plot.xgrid.grid_line_color = None
-    not_sorted_plot.y_range.start = 0
-    not_sorted_plot.xaxis.axis_label = "Letters"
-    not_sorted_plot.yaxis.axis_label = "Count"
-    not_sorted_plot.xaxis.major_label_orientation = "horizontal"
-  
-    script, div = components(not_sorted_plot)
-    p_not_sorted = [script, div]
+            not_sorted_plot.xgrid.grid_line_color = None
+            not_sorted_plot.y_range.start = 0
+            not_sorted_plot.xaxis.axis_label = "Letters"
+            not_sorted_plot.yaxis.axis_label = "Count"
+            not_sorted_plot.xaxis.major_label_orientation = "horizontal"
+        
+            script, div = components(not_sorted_plot)
+            p_not_sorted = [script, div]
 
-    sorted_result = dict(sorted(result.items(), key=lambda x:x[1]))
+            sorted_result = dict(sorted(result.items(), key=lambda x:x[1]))
 
-    sorted_letters = list(sorted_result.keys())
-    sorted_values = list(sorted_result.values())
+            sorted_letters = list(sorted_result.keys())
+            sorted_values = list(sorted_result.values())
 
-    sorted_plot = figure(
-        x_range=sorted_letters,
-        height=500,
-        sizing_mode="stretch_width",
-        title="Number of Words Starting with Each Letter",
-        toolbar_location=None, tools=""
-    )
-    
-    sorted_plot.vbar(x=sorted_letters, top=sorted_values, width=0.8, color="navy", alpha=0.7)
+            sorted_plot = figure(
+                x_range=sorted_letters,
+                height=500,
+                sizing_mode="stretch_width",
+                title="Number of Words Starting with Each Letter",
+                toolbar_location=None, tools=""
+            )
+            
+            sorted_plot.vbar(x=sorted_letters, top=sorted_values, width=0.8, color="navy", alpha=0.7)
 
-    sorted_plot.xgrid.grid_line_color = None
-    sorted_plot.y_range.start = 0
-    sorted_plot.xaxis.axis_label = "Letters"
-    sorted_plot.yaxis.axis_label = "Count"
-    sorted_plot.xaxis.major_label_orientation = "horizontal"
-  
-    script, div = components(sorted_plot)
-    p_sorted = [script, div]
+            sorted_plot.xgrid.grid_line_color = None
+            sorted_plot.y_range.start = 0
+            sorted_plot.xaxis.axis_label = "Letters"
+            sorted_plot.yaxis.axis_label = "Count"
+            sorted_plot.xaxis.major_label_orientation = "horizontal"
+        
+            script, div = components(sorted_plot)
+            p_sorted = [script, div]
 
-    return render_template('charts.html', p_not_sorted=p_not_sorted, p_sorted=p_sorted, title=title)
+            return render_template('charts.html', p_not_sorted=p_not_sorted, p_sorted=p_sorted, title=title)
+        except Exception as e:
+            log_exceptions(e)
+            return render_template('error_page.html', message=f"[?] There was an issue: {str(e)}")
+    else:
+        e = '[!] You do not have permission to see analysis module'
+        log_exceptions(e)
+        return render_template('error_page.html', message=e)
 
 
 @app.route('/unique_added_by_count')
 @login_required
 def unique_added_by_count():
-    title = request.args.get('title', 'Number of words added by users')
+    if current_user.role_id != 3:
+        try:
+            title = request.args.get('title', 'Number of words added by users')
 
-    result = get_unique_added_by_count()
-    users = list(result.keys())
-    values = list(result.values())
+            result = get_unique_added_by_count()
+            users = list(result.keys())
+            values = list(result.values())
 
-    not_sorted_plot = figure(
-        x_range=users,
-        height=500,
-        sizing_mode="stretch_width",
-        title="Number of words added by users",
-        toolbar_location=None, tools=""
-    )
-    
-    not_sorted_plot.vbar(x=users, top=values, width=0.8, color="navy", alpha=0.7)
+            not_sorted_plot = figure(
+                x_range=users,
+                height=500,
+                sizing_mode="stretch_width",
+                title="Number of words added by users",
+                toolbar_location=None, tools=""
+            )
+            
+            not_sorted_plot.vbar(x=users, top=values, width=0.8, color="navy", alpha=0.7)
 
-    not_sorted_plot.xgrid.grid_line_color = None
-    not_sorted_plot.y_range.start = 0
-    not_sorted_plot.xaxis.axis_label = "Users"
-    not_sorted_plot.yaxis.axis_label = "Count"
-    not_sorted_plot.xaxis.major_label_orientation = "horizontal"
-  
-    script, div = components(not_sorted_plot)
-    p_not_sorted = [script, div]
+            not_sorted_plot.xgrid.grid_line_color = None
+            not_sorted_plot.y_range.start = 0
+            not_sorted_plot.xaxis.axis_label = "Users"
+            not_sorted_plot.yaxis.axis_label = "Count"
+            not_sorted_plot.xaxis.major_label_orientation = "horizontal"
+        
+            script, div = components(not_sorted_plot)
+            p_not_sorted = [script, div]
 
-    sorted_result = dict(sorted(result.items(), key=lambda x:x[1]))
+            sorted_result = dict(sorted(result.items(), key=lambda x:x[1]))
 
-    sorted_users = list(sorted_result.keys())
-    sorted_values = list(sorted_result.values())
+            sorted_users = list(sorted_result.keys())
+            sorted_values = list(sorted_result.values())
 
-    sorted_plot = figure(
-        x_range=sorted_users,
-        height=500,
-        sizing_mode="stretch_width",
-        title="Number of words added by users",
-        toolbar_location=None, tools=""
-    )
-    
-    sorted_plot.vbar(x=sorted_users, top=sorted_values, width=0.8, color="navy", alpha=0.7)
+            sorted_plot = figure(
+                x_range=sorted_users,
+                height=500,
+                sizing_mode="stretch_width",
+                title="Number of words added by users",
+                toolbar_location=None, tools=""
+            )
+            
+            sorted_plot.vbar(x=sorted_users, top=sorted_values, width=0.8, color="navy", alpha=0.7)
 
-    sorted_plot.xgrid.grid_line_color = None
-    sorted_plot.y_range.start = 0
-    sorted_plot.xaxis.axis_label = "Users"
-    sorted_plot.yaxis.axis_label = "Count"
-    sorted_plot.xaxis.major_label_orientation = "horizontal"
-  
-    script, div = components(sorted_plot)
-    p_sorted = [script, div]
+            sorted_plot.xgrid.grid_line_color = None
+            sorted_plot.y_range.start = 0
+            sorted_plot.xaxis.axis_label = "Users"
+            sorted_plot.yaxis.axis_label = "Count"
+            sorted_plot.xaxis.major_label_orientation = "horizontal"
+        
+            script, div = components(sorted_plot)
+            p_sorted = [script, div]
 
-    return render_template('charts.html', p_not_sorted=p_not_sorted, p_sorted=p_sorted,title=title)
+            return render_template('charts.html', p_not_sorted=p_not_sorted, p_sorted=p_sorted,title=title)
+        except Exception as e:
+            log_exceptions(e)
+            return render_template('error_page.html', message=f"[?] There was an issue: {str(e)}")
+    else:
+        e = '[!] You do not have permission to see analysis module'
+        log_exceptions(e)
+        return render_template('error_page.html', message=e)
 
 
 @app.route('/top_10_most_searched')
 @login_required
 def top_10_most_searched():
-    title = request.args.get('title', 'Top 10 most searched words')
+    if current_user.role_id != 3:
+        try:
+            title = request.args.get('title', 'Top 10 most searched words')
 
-    result = get_top_10_most_searched()
-    sorted_by_content = sorted(result, key=lambda x: x['content'])
-    content_x = [item['content'] for item in sorted_by_content]
-    searched_y = [item['searched'] for item in sorted_by_content]
+            result = get_top_10_most_searched()
+            sorted_by_content = sorted(result, key=lambda x: x['content'])
+            content_x = [item['content'] for item in sorted_by_content]
+            searched_y = [item['searched'] for item in sorted_by_content]
 
-    p1 = figure(x_range=content_x, title="Words Sorted Alphabetically by 'content'", height=400, sizing_mode="stretch_width")
-    p1.vbar(x=content_x, top=searched_y, width=0.5, color="navy", alpha=0.7)
-    p1.xaxis.major_label_orientation = "horizontal"
-    p1.xaxis.axis_label = "Content"
-    p1.yaxis.axis_label = "Searched"
+            p1 = figure(x_range=content_x, title="Words Sorted Alphabetically by 'content'", height=400, sizing_mode="stretch_width")
+            p1.vbar(x=content_x, top=searched_y, width=0.5, color="navy", alpha=0.7)
+            p1.xaxis.major_label_orientation = "horizontal"
+            p1.xaxis.axis_label = "Content"
+            p1.yaxis.axis_label = "Searched"
 
-    sorted_by_searched = sorted(result, key=lambda x: x['searched'], reverse=True)
-    content_x_sorted = [item['content'] for item in sorted_by_searched]
-    searched_y_sorted = [item['searched'] for item in sorted_by_searched]
+            sorted_by_searched = sorted(result, key=lambda x: x['searched'], reverse=True)
+            content_x_sorted = [item['content'] for item in sorted_by_searched]
+            searched_y_sorted = [item['searched'] for item in sorted_by_searched]
 
-    p2 = figure(x_range=content_x_sorted, title="Words Sorted by 'searched' (Descending)", height=400, sizing_mode="stretch_width")
-    p2.vbar(x=content_x_sorted, top=searched_y_sorted, width=0.5, color="green", alpha=0.7)
-    p2.xaxis.major_label_orientation = "horizontal"
-    p2.xaxis.axis_label = "Content"
-    p2.yaxis.axis_label = "Searched"
+            p2 = figure(x_range=content_x_sorted, title="Words Sorted by 'searched' (Descending)", height=400, sizing_mode="stretch_width")
+            p2.vbar(x=content_x_sorted, top=searched_y_sorted, width=0.5, color="green", alpha=0.7)
+            p2.xaxis.major_label_orientation = "horizontal"
+            p2.xaxis.axis_label = "Content"
+            p2.yaxis.axis_label = "Searched"
 
-    script1, div1 = components(p1)
-    script2, div2 = components(p2)
+            script1, div1 = components(p1)
+            script2, div2 = components(p2)
 
-    p_not_sorted = [script1, div1]
-    p_sorted = [script2, div2]
+            p_not_sorted = [script1, div1]
+            p_sorted = [script2, div2]
 
-    return render_template('charts.html', p_not_sorted=p_not_sorted, p_sorted=p_sorted, title=title)
+            return render_template('charts.html', p_not_sorted=p_not_sorted, p_sorted=p_sorted, title=title)
+        except Exception as e:
+            log_exceptions(e)
+            return render_template('error_page.html', message=f"[?] There was an issue: {str(e)}")
+    else:
+        e = '[!] You do not have permission to see analysis module'
+        log_exceptions(e)
+        return render_template('error_page.html', message=e)
 
 
 @app.route('/searched_words_per_day_17', methods=['GET'])
 @login_required
 def searched_words_per_day_17():
-    title = request.args.get('title', 'Searched words per day, last 17 days')
+    if current_user.role_id != 3:
+        try:
+            title = request.args.get('title', 'Searched words per day, last 17 days')
 
-    seventeen_days_ago = datetime.utcnow().date() - timedelta(days=17)
+            seventeen_days_ago = datetime.utcnow().date() - timedelta(days=17)
 
-    results_not_sorted = db.session.query(
-        func.date(Word.last_search).label('date'),
-        func.count(Word.id).label('count')
-    ).filter(
-        Word.last_search >= seventeen_days_ago
-    ).group_by(func.date(Word.last_search)).all()
-    
-    dates_not_sorted = [str(result.date) for result in results_not_sorted]
-    counts_not_sorted = [result.count for result in results_not_sorted]
+            results_not_sorted = db.session.query(
+                func.date(Word.last_search).label('date'),
+                func.count(Word.id).label('count')
+            ).filter(
+                Word.last_search >= seventeen_days_ago
+            ).group_by(func.date(Word.last_search)).all()
+            
+            dates_not_sorted = [str(result.date) for result in results_not_sorted]
+            counts_not_sorted = [result.count for result in results_not_sorted]
 
-    p_not_sorted = figure(
-        x_range=dates_not_sorted,
-        title="Liczba wyszukiwań słów każdego dnia (ostatnie 17 dni)",
-        x_axis_label="Data",
-        y_axis_label="Liczba wyszukiwań",
-        height=500,
-        width=1000,
-        sizing_mode="stretch_width"
-    )
+            p_not_sorted = figure(
+                x_range=dates_not_sorted,
+                title="Liczba wyszukiwań słów każdego dnia (ostatnie 17 dni)",
+                x_axis_label="Data",
+                y_axis_label="Liczba wyszukiwań",
+                height=500,
+                width=1000,
+                sizing_mode="stretch_width"
+            )
 
-    p_not_sorted.vbar(x=dates_not_sorted, top=counts_not_sorted, width=0.5, color="green", legend_label="Wyszukiwania")
+            p_not_sorted.vbar(x=dates_not_sorted, top=counts_not_sorted, width=0.5, color="green", legend_label="Wyszukiwania")
 
-    p_not_sorted.xaxis.major_label_orientation = 0.8
-    p_not_sorted.legend.title = "Legenda"
-    p_not_sorted.legend.location = "top_left"
+            p_not_sorted.xaxis.major_label_orientation = 0.8
+            p_not_sorted.legend.title = "Legenda"
+            p_not_sorted.legend.location = "top_left"
 
-    script_not_sorted, div_not_sorted = components(p_not_sorted)
+            script_not_sorted, div_not_sorted = components(p_not_sorted)
 
-    results_sorted = db.session.query(
-        func.date(Word.last_search).label('date'),
-        func.count(Word.id).label('count')
-    ).filter(
-        Word.last_search != None
-    ).group_by(func.date(Word.last_search)) \
-     .order_by(func.count(Word.id).desc()) \
-     .limit(17).all()
+            results_sorted = db.session.query(
+                func.date(Word.last_search).label('date'),
+                func.count(Word.id).label('count')
+            ).filter(
+                Word.last_search != None
+            ).group_by(func.date(Word.last_search)) \
+            .order_by(func.count(Word.id).desc()) \
+            .limit(17).all()
 
-    dates_sorted = [str(result.date) for result in results_sorted]
-    counts_sorted = [result.count for result in results_sorted]
+            dates_sorted = [str(result.date) for result in results_sorted]
+            counts_sorted = [result.count for result in results_sorted]
 
-    p_sorted = figure(
-        x_range=dates_sorted,
-        title="Top 10 dni z największą liczbą wyszukiwań słów",
-        x_axis_label="Data",
-        y_axis_label="Liczba wyszukiwań",
-        height=500,
-        width=1000,
-        sizing_mode="stretch_width"
-    )
+            p_sorted = figure(
+                x_range=dates_sorted,
+                title="Top 10 dni z największą liczbą wyszukiwań słów",
+                x_axis_label="Data",
+                y_axis_label="Liczba wyszukiwań",
+                height=500,
+                width=1000,
+                sizing_mode="stretch_width"
+            )
 
-    p_sorted.vbar(x=dates_sorted, top=counts_sorted, width=0.5, color="blue", legend_label="Top dni")
+            p_sorted.vbar(x=dates_sorted, top=counts_sorted, width=0.5, color="blue", legend_label="Top dni")
 
-    p_sorted.xaxis.major_label_orientation = 0.8
-    p_sorted.legend.title = "Legenda"
-    p_sorted.legend.location = "top_left"
+            p_sorted.xaxis.major_label_orientation = 0.8
+            p_sorted.legend.title = "Legenda"
+            p_sorted.legend.location = "top_left"
 
-    script_sorted, div_sorted = components(p_sorted)
+            script_sorted, div_sorted = components(p_sorted)
 
-    p_not_sorted = [script_not_sorted, div_not_sorted]
-    p_sorted = [script_sorted, div_sorted]
+            p_not_sorted = [script_not_sorted, div_not_sorted]
+            p_sorted = [script_sorted, div_sorted]
 
-    return render_template('charts.html', p_not_sorted=p_not_sorted, p_sorted=p_sorted, title=title)
+            return render_template('charts.html', p_not_sorted=p_not_sorted, p_sorted=p_sorted, title=title)
+        except Exception as e:
+            log_exceptions(e)
+            return render_template('error_page.html', message=f"[?] There was an issue: {str(e)}")
+    else:
+        e = '[!] You do not have permission to see analysis module'
+        log_exceptions(e)
+        return render_template('error_page.html', message=e)
 
+
+# BUBBLES
+
+
+# menu page
+@app.route('/analysis_bubbles_menu', methods=['GET'])
+@login_required
+def analysis_bubbles_menu():
+    if current_user.role_id != 3:
+        try:
+            return render_template('analysis_bubbles_menu.html')
+        except Exception as e:
+            log_exceptions(e)
+            return render_template('error_page.html', message=f"[?] There was an issue: {str(e)}")
+    else:
+        e = '[!] You do not have permission to see analysis module'
+        log_exceptions(e)
+        return render_template('error_page.html', message=e)
 
 
 @app.route('/top_10_latest_words_of_the_day')
 @login_required
 def top_10_latest_words_of_the_day():
-    column = request.args.get('column', 'LWD')
-    title = request.args.get('title', 'Latest Words of The Day')
-    
-    result = get_latest(column=column)
-    sorted_words = sorted(result, key=lambda x: x['last_as_word_of_the_day'], reverse=True)
+    if current_user.role_id != 3:
+        try:
+            column = request.args.get('column', 'LWD')
+            title = request.args.get('title', 'Latest Words of The Day')
+            
+            result = get_latest(column=column)
+            sorted_words = sorted(result, key=lambda x: x['last_as_word_of_the_day'], reverse=True)
 
-    return render_template('bubbles.html', words=sorted_words, title=title, previous_page='bubble', column=column)
+            return render_template('bubbles.html', words=sorted_words, title=title, previous_page='bubble', column=column)
+        except Exception as e:
+            log_exceptions(e)
+            return render_template('error_page.html', message=f"[?] There was an issue: {str(e)}")
+    else:
+        e = '[!] You do not have permission to see analysis module'
+        log_exceptions(e)
+        return render_template('error_page.html', message=e)
 
 
 @app.route('/top_10_latest_words_of_literally')
 @login_required
 def top_10_latest_words_of_literally():
-    column = request.args.get('column', 'LWL')
-    title = request.args.get('title', 'Latest Words of Literally')
-    
-    result = get_latest(column=column)
-    sorted_words = sorted(result, key=lambda x: x['last_as_word_of_literally'], reverse=True)
+    if current_user.role_id != 3:
+        try:
+            column = request.args.get('column', 'LWL')
+            title = request.args.get('title', 'Latest Words of Literally')
+            
+            result = get_latest(column=column)
+            sorted_words = sorted(result, key=lambda x: x['last_as_word_of_literally'], reverse=True)
 
-    return render_template('bubbles.html', words=sorted_words, title=title, previous_page='bubble', column=column)
+            return render_template('bubbles.html', words=sorted_words, title=title, previous_page='bubble', column=column)
+        except Exception as e:
+            log_exceptions(e)
+            return render_template('error_page.html', message=f"[?] There was an issue: {str(e)}")
+    else:
+        e = '[!] You do not have permission to see analysis module'
+        log_exceptions(e)
+        return render_template('error_page.html', message=e)
 
 
 @app.route('/top_10_latest_searched')
 @login_required
 def top_10_latest_searched():
-    column = request.args.get('column', 'LS')
-    title = request.args.get('title', 'Latest Searched Words')
-    
-    result = get_latest(column=column)
-    sorted_words = sorted(result, key=lambda x: x['last_search'], reverse=True)
-    print(sorted_words[0]['last_search'])
+    if current_user.role_id != 3:
+        try:
+            column = request.args.get('column', 'LS')
+            title = request.args.get('title', 'Latest Searched Words')
+            
+            result = get_latest(column=column)
+            sorted_words = sorted(result, key=lambda x: x['last_search'], reverse=True)
+            print(sorted_words[0]['last_search'])
 
-    return render_template('bubbles.html', words=sorted_words, title=title, previous_page='bubble', column=column)
+            return render_template('bubbles.html', words=sorted_words, title=title, previous_page='bubble', column=column)
+        except Exception as e:
+            log_exceptions(e)
+            return render_template('error_page.html', message=f"[?] There was an issue: {str(e)}")
+    else:
+        e = '[!] You do not have permission to see analysis module'
+        log_exceptions(e)
+        return render_template('error_page.html', message=e)
 
 
 if __name__ == "__main__":

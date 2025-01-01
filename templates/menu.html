@@ -39,25 +39,30 @@
     <button class="menu_button" onclick="window.location='/add_word'">Add Word</button>
     <br><br>
     <button class="menu_button" onclick="window.location='/all_words'">All Words</button>
-    <br><br>
-    <button class="menu_button" onclick="window.location='/all_proposals'">All Proposals</button>
-    <hr>
-    <p>Users module</p>
-    <button class="menu_button" onclick="window.location='/all_users'">All Users</button>
-    <br><br>
-    <button class="menu_button" onclick="window.location='/admin_register'">Add User</button>
-    <hr>
-    <p>Analysis module</p>
-    <button class="menu_button" onclick="window.location='/analysis_bar_plots_menu'">Plots</button>
-    <br><br>
-    <button class="menu_button" onclick="window.location='/analysis_bubbles_menu'">Bubbles</button>
-    <hr>
-    <p>Extra module</p>
-    <button class="menu_button" onclick="window.location='/history'">History</button>
+    {% if current_user.role_id == 1 %}
+        <br><br>
+        <button class="menu_button" onclick="window.location='/all_proposals'">All Proposals</button>
+        <hr>
+        <p>Users module</p>
+        <button class="menu_button" onclick="window.location='/all_users'">All Users</button>
+        <br><br>
+        <button class="menu_button" onclick="window.location='/admin_register'">Add User</button>
+    {% endif %}
+    {% if current_user.role_id != 3 %}
+        <hr>
+        <p>Analysis module</p>
+        <button class="menu_button" onclick="window.location='/analysis_bar_plots_menu'">Plots</button>
+        <br><br>
+        <button class="menu_button" onclick="window.location='/analysis_bubbles_menu'">Bubbles</button>
+    {% endif %}
+    {% if current_user.role_id == 1 %}
+        <hr>
+        <p>Extra module</p>
+        <button class="menu_button" onclick="window.location='/history'">History</button>
+    {% endif %}
     <hr>
 </div>
 
-<!-- Logout Button -->
 <button class="logout-button" onclick="window.location='/logout'">
     <i class="fas fa-sign-out-alt"></i> Log out
 </button>

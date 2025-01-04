@@ -83,7 +83,7 @@ class Proposal(db.Model):
 
 class History(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    flag = db.Column(db.String(3), nullable=False) # ER?, ER!, ENT, ETU, ETW, CRU, CRP, CRW, DEL, LG!
+    flag = db.Column(db.String(3), nullable=False) # ER?, ER!, ENT, ETU, ETW, CRU, CRP, CRW, DEL, LG!, ACP, SRC
     date = db.Column(db.DateTime, default=datetime.utcnow)
     title = db.Column(db.String(5000), nullable=False)
     description = db.Column(db.String(5000), nullable=True)
@@ -270,9 +270,9 @@ def all_users():
         users = User.query.order_by(User.username).all()
         return render_template('all_users.html', users=users, id=current_user.id)
     else:
-        title = 'No permission to see the list of users'
-        log_events(flag='ER!', title=title, description=None)
-        return render_template('error_page.html', message=title)
+        title = 'permission to see the list of users'
+        log_events(flag='ER!', title=f'No {title}', description=None)
+        return render_template('error_page.html', message=f'You dont have {title}')
 
 
 @app.route('/update/user_<int:id>', methods=['GET', 'POST'])
@@ -345,11 +345,11 @@ def delete_user(id):
                 return render_template('error_page.html', message=title)
         else:
             title = 'permission to delete users'
-            log_events(flag='ER!', title='Delete user', description=f'No {title}')
+            log_events(flag='ER!', title=f'No {title}', description=None)
             return render_template('error_page.html', message=f'You do not have {title}')
     else:
         title = 'annot delete own user'
-        log_events(flag='ER!', title='Delete user', description=f'C{title}')
+        log_events(flag='ER!', title=f'C{title}', description=None)
         return render_template('error_page.html', message=f'You c{title}')
 
 
@@ -478,7 +478,7 @@ def word_of_literally(id):
                 return render_template('error_page.html', message=title)
     else:
         title = 'permission to mark word'
-        log_events(flag='ER?', title=f'no {title}', description=None)
+        log_events(flag='ER?', title=f'No {title}', description=None)
         return render_template('error_page.html', message=f'You dont have {title}')
 
 
@@ -492,12 +492,13 @@ def proposals():
             proposals = Proposal.query.order_by(Proposal.date).all()
             return render_template('all_proposals.html', proposals=proposals)
         except Exception as e:
-            log_events(e)
-            return render_template('error_page.html', message=e)
+            title = 'Unknown error while displaying proposals'
+            log_events(flag='ER?', title=title, description=e)
+            return render_template('error_page.html', message=title)
     else:
-        e = "[!] You don't have permission to see list of proposals"
-        log_events(e)
-        return render_template('error_page.html', message=e)
+        title = "permission to see list of proposals"
+        log_events(flag='ER!', title=f'No {title}', description=None)
+        return render_template('error_page.html', message=f'You dont have {title}')
 
 
 @app.route('/delete/proposal_<int:id>')
@@ -505,24 +506,24 @@ def proposals():
 def delete_proposal(id):
     if 1 == current_user.role_id:
         proposal_to_delete = Proposal.query.get_or_404(id)
-        new_event = History(action=f'Delete proposal : {proposal_to_delete.name}', user=session['username'])
         try:
-            db.session.add(new_event)
             db.session.delete(proposal_to_delete)
             db.session.commit()
             proposals = Proposal.query.all()
+            log_events(flag='DEL', title=f'Deleted proposal : {proposal_to_delete.name}', description=None)
             if len(proposals) > 0:
                 return redirect('/all_proposals')
             else:
                 return redirect('/menu')
         except Exception as e:
             db.session.rollback()
-            log_events(e)
-            return render_template('error_page.html', message="[?] There was an issue deleting that proposal")
+            title = "There was an issue deleting proposal"
+            log_events(flag='ER?', title=title, description=e)
+            return render_template('error_page.html', message=title)
     else:
-        e = '[!] You do not have permission to delete proposals'
-        log_events(e)
-        return render_template('error_page.html', message=e)
+        title = 'permission to delete proposals'
+        log_events(flag='ER!', title=f'No {title}', description=None)
+        return render_template('error_page.html', message=f'You dont have {title}')
 
 
 @app.route('/show/proposal_<int:id>')
@@ -533,12 +534,13 @@ def show_proposal(id):
             proposal_to_show = Proposal.query.get_or_404(id)
             return render_template('show_proposal.html', proposal=proposal_to_show)
         except Exception as e:
-            log_events(e)
-            return render_template('error_page.html', message="[?] There is not such proposal in database")
+            title = "There was a problem looking for this proposal"
+            log_events(flag='ER?', title=title, description=e)
+            return render_template('error_page.html', message=title)
     else:
-        e = "[!] You don't have permission to look into proposals"
-        log_events(e)
-        return render_template('error_page.html', message=e)
+        title = "permission to look into proposals"
+        log_events(flag='ER!', title=f'No {title}', description=None)
+        return render_template('error_page.html', message=f'You dont have {title}')
 
 
 @app.route('/accept_proposal_<int:id>', methods=['POST','GET'])
@@ -552,12 +554,11 @@ def accept_proposal(id):
         source = "Added by user, accepted by one of admins"
         added_by = proposal_to_delete.user
         new_word = Word(content=content, searched=searched, definition=definition, source=source, added_by=added_by)
-        new_event = History(action=f'Accept proposal : {content}', user=session['username'])
         try:
-            db.session.add(new_event)
             db.session.delete(proposal_to_delete)
             db.session.add(new_word)
             db.session.commit()
+            log_events(flag='ACP', title=f'Accept proposal : {content}', description=None)
             proposals = Proposal.query.all()
             if len(proposals) > 0:
                 return redirect('/all_proposals')
@@ -565,12 +566,13 @@ def accept_proposal(id):
                 return redirect('/menu')
         except Exception as e:
             db.session.rollback()
-            log_events(e)
-            return render_template('error_page.html', message="[?] There was an issue accepting that proposal")
+            title = "There was an issue accepting that proposal"
+            log_events(flag='ER?', title=title, description=None)
+            return render_template('error_page.html', message=title)
     else:
-        e = '[!] You do not have permission to accept proposals'
-        log_events(e)
-        return render_template('error_page.html', message=e)
+        title = 'permission to accept proposals'
+        log_events(flag='ER!', title=f'No {title}', description=None)
+        return render_template('error_page.html', message=f'You dont have {title}')
 
 
 # WORD SEARCH
@@ -637,16 +639,14 @@ def found_words():
             query = query.filter(Word.content.like(pattern))
 
     matching_words = query.all()
-    new_event = History(action=f'Searched for word with {filters}', user=session['username'])
     
     try:
-        db.session.add(new_event)
-        db.session.commit()
+        log_events(flag='SRC', title=f'Searched for word with {filters}', description=None)
         return render_template('found_words.html', words=matching_words, previous_page='finder')
     except Exception as e:
-        db.session.rollback()
-        log_events(e)
-        render_template('error_page.html', message=f"[?] There was an issue while looking for words")
+        title = "There was an issue while looking for words"
+        log_events(flag='ER?', title=title, description=None)
+        render_template('error_page.html', message=title)
 
 
 @app.route('/show/word_<int:id>/<string:previous_page>', methods=['GET', 'POST'])
@@ -654,19 +654,18 @@ def found_words():
 def show_word(id, previous_page):
     word_to_show = Word.query.get_or_404(id)
     word_to_show.searched += 1
-    word_to_show.last_search = datetime.utcnow()
-    new_event = History(action=f'Searched for word:{word_to_show.content}', user=session['username'])
+    word_to_show.last_search = datetime.now(POLAND_TZ)
     todays_last_as_word_of_literally = True
-    if word_to_show.last_as_word_of_literally == datetime.utcnow().date():
+    if word_to_show.last_as_word_of_literally == datetime.now(POLAND_TZ).date():
         todays_last_as_word_of_literally = False
     try:
-        db.session.add(new_event)
-        db.session.commit()
+        log_events(flag='SRC', title=f'Searched for word with {word_to_show.content}', description=None)
         return render_template('show_word.html', word=word_to_show, previous_page=previous_page, todays_last_as_word_of_literally=todays_last_as_word_of_literally)
     except Exception as e:
         db.session.rollback()
-        log_events(e)
-        return render_template('error_page.html', message=f"[?] There was an issue showing this word: {str(e)}")
+        title = f'There was an issue looking up for word: {word_to_show.content}'
+        log_events(flag='ER?', title=title, description=e)
+        return render_template('error_page.html', message=title)
 
 
 ###################################################################################################################################
@@ -682,12 +681,13 @@ def history():
             events = History.query.order_by(History.date.desc()).all()
             return render_template('history.html', events=events)
         except Exception as e:
-            log_events(e)
-            return render_template('error_page.html', message=f"[?] There was an issue: {str(e)}")
+            title = 'There was an issue getting events'
+            log_events(flag='ER?', title=title, description=e)
+            return render_template('error_page.html', message=title)
     else:
-        e = '[!] You do not have permission to look into history'
-        log_events(e)
-        return render_template('error_page.html', message=e)
+        title = 'permission to look into history'
+        log_events(flag='ER!', title=f'No {title}', description=None)
+        return render_template('error_page.html', message=f'You dont have {title}')
 
 
 @app.route('/delete/events')
@@ -699,19 +699,21 @@ def deleting():
             try:
                 History.query.delete()
                 db.session.commit()
+                log_events(flag='ER?', title='History cleared', description=None)
                 return render_template('loading_page.html')
             except Exception as e:
                 db.session.rollback()
-                log_events(e)
-                return render_template('error_page.html', message="[?] There was an issue deleting history")
+                title = 'There was an issue deleting history'
+                log_events(flag='ER?', title=title, description=e)
+                return render_template('error_page.html', message=title)
         else:
-            e = "[!] There is no history in database"
-            log_events(e)
-            return render_template('error_page.html', message=e)
+            title = "There is no history in database"
+            log_events(flag='LG!', title=title, description=None)
+            return render_template('error_page.html', message=title)
     else:
-        e = '[!] You do not have permission to delete history'
-        log_events(e)
-        return render_template('error_page.html', message=e)
+        title = 'permission to delete history'
+        log_events(flag='ER!', title=f'No {title}', description=None)
+        return render_template('error_page.html', message=f'You dont have {title}')
 
 
 @app.route('/delete/event_<int:id>')
@@ -729,12 +731,13 @@ def delete_event(id):
                 return redirect('/menu')
         except Exception as e:
             db.session.rollback()
-            log_events(e)
-            return render_template('error_page.html', message="[?] There was an issue deleting that event")
+            title = 'There was an issue deleting this event'
+            log_events(flag='ER?', title=title, description=e)
+            return render_template('error_page.html', message=title)
     else:
-        e = '[!] You do not have permission to delete events'
-        log_events(e)
-        return render_template('error_page.html', message=e)
+        title = 'permission to delete history'
+        log_events(flag='ER!', title=f'No {title}', description=None)
+        return render_template('error_page.html', message=f'You dont have {title}')
 
 
 @app.route('/show/event_<int:id>')
@@ -745,12 +748,13 @@ def show_event(id):
             event_to_show = History.query.get_or_404(id)
             return render_template('show_event.html', event=event_to_show)
         except Exception as e:
-            log_events(e)
-            return render_template('error_page.html', message=f"[?] There was an issue: {str(e)}")
+            title = 'There was an issue deleting this event'
+            log_events(flag='ER?', title=title, description=e)
+            return render_template('error_page.html', message=title)
     else:
-        e = '[!] You do not have permission to look into history events'
-        log_events(e)
-        return render_template('error_page.html', message=e)
+        title = 'permission to look into history events'
+        log_events(flag='ER!', title=f'No {title}', description=None)
+        return render_template('error_page.html', message=f'You dont have {title}')
 
 
 ###################################################################################################################################
@@ -838,12 +842,13 @@ def analysis_bar_plots_menu():
         try:
             return render_template('analysis_bar_plots_menu.html')
         except Exception as e:
-            log_events(e)
-            return render_template('error_page.html', message=f"[?] There was an issue: {str(e)}")
+            title = 'There was an issue dispaying menu'
+            log_events(flag='ER?', title=title, description=e)
+            return render_template('error_page.html', message=title)
     else:
-        e = '[!] You do not have permission to see analysis module'
-        log_events(e)
-        return render_template('error_page.html', message=e)
+        title = 'permission to see analysis module'
+        log_events(flag='ER!', title=f'No {title}', description=None)
+        return render_template('error_page.html', message=f'You dont have {title}')
 
 
 # CHARTS
@@ -905,12 +910,13 @@ def word_starting_with():
 
             return render_template('charts.html', p_not_sorted=p_not_sorted, p_sorted=p_sorted, title=title)
         except Exception as e:
-            log_events(e)
-            return render_template('error_page.html', message=f"[?] There was an issue: {str(e)}")
+            title = 'There was an issue dispaying plot'
+            log_events(flag='ER?', title=title, description=e)
+            return render_template('error_page.html', message=title)
     else:
-        e = '[!] You do not have permission to see analysis module'
-        log_events(e)
-        return render_template('error_page.html', message=e)
+        title = 'permission to see analysis module'
+        log_events(flag='ER!', title=f'No {title}', description=None)
+        return render_template('error_page.html', message=f'You dont have {title}')
 
 
 @app.route('/unique_added_by_count')
@@ -969,12 +975,13 @@ def unique_added_by_count():
 
             return render_template('charts.html', p_not_sorted=p_not_sorted, p_sorted=p_sorted,title=title)
         except Exception as e:
-            log_events(e)
-            return render_template('error_page.html', message=f"[?] There was an issue: {str(e)}")
+            title = 'There was an issue dispaying plot'
+            log_events(flag='ER?', title=title, description=e)
+            return render_template('error_page.html', message=title)
     else:
-        e = '[!] You do not have permission to see analysis module'
-        log_events(e)
-        return render_template('error_page.html', message=e)
+        title = 'permission to see analysis module'
+        log_events(flag='ER!', title=f'No {title}', description=None)
+        return render_template('error_page.html', message=f'You dont have {title}')
 
 
 @app.route('/top_10_most_searched')
@@ -1013,12 +1020,13 @@ def top_10_most_searched():
 
             return render_template('charts.html', p_not_sorted=p_not_sorted, p_sorted=p_sorted, title=title)
         except Exception as e:
-            log_events(e)
-            return render_template('error_page.html', message=f"[?] There was an issue: {str(e)}")
+            title = 'There was an issue dispaying plot'
+            log_events(flag='ER?', title=title, description=e)
+            return render_template('error_page.html', message=title)
     else:
-        e = '[!] You do not have permission to see analysis module'
-        log_events(e)
-        return render_template('error_page.html', message=e)
+        title = 'permission to see analysis module'
+        log_events(flag='ER!', title=f'No {title}', description=None)
+        return render_template('error_page.html', message=f'You dont have {title}')
 
 
 @app.route('/searched_words_per_day_17', methods=['GET'])
@@ -1093,12 +1101,13 @@ def searched_words_per_day_17():
 
             return render_template('charts.html', p_not_sorted=p_not_sorted, p_sorted=p_sorted, title=title)
         except Exception as e:
-            log_events(e)
-            return render_template('error_page.html', message=f"[?] There was an issue: {str(e)}")
+            title = 'There was an issue dispaying plot'
+            log_events(flag='ER?', title=title, description=e)
+            return render_template('error_page.html', message=title)
     else:
-        e = '[!] You do not have permission to see analysis module'
-        log_events(e)
-        return render_template('error_page.html', message=e)
+        title = 'permission to see analysis module'
+        log_events(flag='ER!', title=f'No {title}', description=None)
+        return render_template('error_page.html', message=f'You dont have {title}')
 
 
 # BUBBLES
@@ -1112,12 +1121,13 @@ def analysis_bubbles_menu():
         try:
             return render_template('analysis_bubbles_menu.html')
         except Exception as e:
-            log_events(e)
-            return render_template('error_page.html', message=f"[?] There was an issue: {str(e)}")
+            title = 'There was an issue dispaying menu'
+            log_events(flag='ER?', title=title, description=e)
+            return render_template('error_page.html', message=title)
     else:
-        e = '[!] You do not have permission to see analysis module'
-        log_events(e)
-        return render_template('error_page.html', message=e)
+        title = 'permission to see analysis module'
+        log_events(flag='ER!', title=f'No {title}', description=None)
+        return render_template('error_page.html', message=f'You dont have {title}')
 
 
 @app.route('/top_10_latest_words_of_the_day')
@@ -1133,12 +1143,13 @@ def top_10_latest_words_of_the_day():
 
             return render_template('bubbles.html', words=sorted_words, title=title, previous_page='bubble', column=column)
         except Exception as e:
-            log_events(e)
-            return render_template('error_page.html', message=f"[?] There was an issue: {str(e)}")
+            title = 'There was an issue dispaying plot'
+            log_events(flag='ER?', title=title, description=e)
+            return render_template('error_page.html', message=title)
     else:
-        e = '[!] You do not have permission to see analysis module'
-        log_events(e)
-        return render_template('error_page.html', message=e)
+        title = 'permission to see analysis module'
+        log_events(flag='ER!', title=f'No {title}', description=None)
+        return render_template('error_page.html', message=f'You dont have {title}')
 
 
 @app.route('/top_10_latest_words_of_literally')
@@ -1154,12 +1165,13 @@ def top_10_latest_words_of_literally():
 
             return render_template('bubbles.html', words=sorted_words, title=title, previous_page='bubble', column=column)
         except Exception as e:
-            log_events(e)
-            return render_template('error_page.html', message=f"[?] There was an issue: {str(e)}")
+            title = 'There was an issue dispaying plot'
+            log_events(flag='ER?', title=title, description=e)
+            return render_template('error_page.html', message=title)
     else:
-        e = '[!] You do not have permission to see analysis module'
-        log_events(e)
-        return render_template('error_page.html', message=e)
+        title = 'permission to see analysis module'
+        log_events(flag='ER!', title=f'No {title}', description=None)
+        return render_template('error_page.html', message=f'You dont have {title}')
 
 
 @app.route('/top_10_latest_searched')
@@ -1176,12 +1188,13 @@ def top_10_latest_searched():
 
             return render_template('bubbles.html', words=sorted_words, title=title, previous_page='bubble', column=column)
         except Exception as e:
-            log_events(e)
-            return render_template('error_page.html', message=f"[?] There was an issue: {str(e)}")
+            title = 'There was an issue dispaying plot'
+            log_events(flag='ER?', title=title, description=e)
+            return render_template('error_page.html', message=title)
     else:
-        e = '[!] You do not have permission to see analysis module'
-        log_events(e)
-        return render_template('error_page.html', message=e)
+        title = 'permission to see analysis module'
+        log_events(flag='ER!', title=f'No {title}', description=None)
+        return render_template('error_page.html', message=f'You dont have {title}')
 
 
 if __name__ == "__main__":

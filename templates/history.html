@@ -31,17 +31,17 @@
         {% else %}
             <table>
                 <tr>
-                    <th>Event description</th>
+                    <th>Event title</th>
                     <th>Username</th>
                     <th>Date</th>
                     <th>Actions</th>
                 </tr>
                 {% for event in events %}
                     <tr>
-                        <td>{% if event.action|length > 150 %}
-                            {{ event.action[:150] + ' ...' }}
+                        <td>{% if event.title|length > 150 %}
+                            {{ event.title[:150] + ' ...' }}
                         {% else %}
-                            {{ event.action }}
+                            {{ event.title }}
                         {% endif %}
                         </td>
                         <td>{{ event.user }}</td>

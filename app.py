@@ -4,6 +4,7 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func, desc
 from flask_login import UserMixin, LoginManager, login_user, login_required, logout_user, current_user
 from datetime import datetime, timedelta
+import pytz
 from flask_bcrypt import Bcrypt
 import requests
 from collections import defaultdict
@@ -26,6 +27,8 @@ bcrypt = Bcrypt(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = "login"
+
+POLAND_TZ = pytz.timezone('Europe/Warsaw')
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -76,11 +79,14 @@ class Proposal(db.Model):
     date = db.Column(db.DateTime, default=datetime.utcnow)
     reasoning = db.Column(db.String(5000), nullable=True)
     user = db.Column(db.String(50), nullable=False)
+    upvoted = db.Column(db.Integer, nullable=False)
 
 class History(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    flag = db.Column(db.String(3), nullable=False) # ER?, ER!, ENT, ETU, ETW, CRU, CRP, CRW, DEL, LG!
     date = db.Column(db.DateTime, default=datetime.utcnow)
-    action = db.Column(db.String(5000), nullable=False)
+    title = db.Column(db.String(5000), nullable=False)
+    description = db.Column(db.String(5000), nullable=True)
     user = db.Column(db.String(50), nullable=False)
 
 
@@ -109,18 +115,21 @@ def validate_word_content(content):
 
 
 # function to log errors in History table
-@app.route('/log_exception', methods=['POST'])
-def log_exception():
+@app.route('/log_event', methods=['POST'])
+def log_event():
     try:
         data = request.get_json()
 
-        error_message = data.get('error')
+        flag = data.get('flag')
+        title = data.get('title')
+        description = data.get('description')
         username = data.get('username', 'unknown')
-        #error_details = data.get('error_details')
-        timestamp = data.get('timestamp', datetime.utcnow().isoformat())
+        timestamp = data.get('timestamp', datetime.now(POLAND_TZ).isoformat())
 
         new_event = History(
-            action=f"Error occurred: {error_message}",
+            flag=flag,
+            title=title,
+            description=description,
             user=username,
             date=datetime.fromisoformat(timestamp)
         )
@@ -132,27 +141,20 @@ def log_exception():
 
     except Exception as e:
         db.session.rollback()
-        payload = {
-            "error": str(e),
-            "username": session.get('username', 'unknown'),
-            "timestamp": datetime.utcnow().isoformat()
-        }
-        try:
-            response = requests.post("http://127.0.0.1:80/log_exception", json=payload)
-            response.raise_for_status()
-        except requests.exceptions.RequestException as req_e:
-            current_app.logger.error(f"Failed to make a call to logging endpoint: {req_e}")
+        log_events(flag='ER?', title='Unknown error while logging events', description=e)
         return jsonify({"error": f"Failed to log error: {str(e)}"}), 500
 
 
-def log_exceptions(exception):
+def log_events(flag, title, description):
     payload = {
-            "error": str(exception),
+            "flag": flag,
+            "title": title,
+            "description": str(description) if description else None,
             "username": session.get('username', 'unknown'),
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(POLAND_TZ).isoformat()
         }
     try:
-        response = requests.post("http://127.0.0.1:80/log_exception", json=payload)
+        response = requests.post("http://127.0.0.1:80/log_event", json=payload)
         response.raise_for_status()
     except requests.exceptions.RequestException as req_e:
         current_app.logger.error(f"Failed to make a call to logging endpoint: {req_e}")
@@ -188,15 +190,15 @@ def login():
                 session['show_log_out'] = True
                 session['username'] = user.username
                 login_user(user)
-                new_event = History(action='Log in', user=session['username'])
+                log_events(flag='ENT', title='User log in', description=None)
                 try:
-                    db.session.add(new_event)
-                    db.session.commit()
                     session['username_used']=False
                     return redirect('/menu')
                 except Exception as e:
                     db.session.rollback()
-                    log_exceptions(e)
+                    title = "There was an issue logging in"
+                    log_events(flag='ER?', title=title, description=e)
+                    return render_template('error_page.html', message=title)
             else:
                 return render_template('login.html', y=True, x=False)
         else:
@@ -208,17 +210,16 @@ def login():
 @app.route('/logout', methods=['GET'])
 @login_required
 def logout():
-    new_event = History(action='Log out', user=session['username'])
     try:
-        db.session.add(new_event)
-        db.session.commit()
+        log_events("ENT", 'User log out', None)
         session['username_used']=False
         logout_user()
         session.clear()
         return redirect('/')
     except Exception as e:
-        log_exceptions(e)
-        return render_template('error_page.html', message="[?] There was an issue logging out")
+        title = 'There was an issue logging out'
+        log_events(flag='ER?', title=title, description=e)
+        return render_template('error_page.html', message=title)
 
 
 ###################################################################################################################################
@@ -242,22 +243,23 @@ def admin_register():
                 hashed_password = bcrypt.generate_password_hash(password)
                 role = Role.query.filter_by(name=role_name).first()
                 new_user = User(username=username, password=hashed_password, role=role)
-                new_event = History(action=f'Create new user, named: {new_user.username}', user=session['username'])
+                log_events(flag='CRU', title=f'Create new user', description=f'Created user is named: {new_user.username}')
                 try:
                     db.session.add(new_user)
-                    db.session.add(new_event)
                     db.session.commit()
                     session['username_used']=False
                     return redirect('/menu')
                 except Exception as e:
                     db.session.rollback()
-                    log_exceptions(e)
-                    return render_template('error_page.html', message="[?] There was an issue adding new user")
+                    title = 'There was an issue adding new user'
+                    log_events(flag='ER?', title=title, description=e)
+                    return render_template('error_page.html', message=title)
         else:
             return render_template('admin_register.html', show_hidden=False)
     else:
-        log_exceptions(e)
-        return render_template('error_page.html', message="[!] You dont have permission to add new users")
+        title = 'permission to add new users'
+        log_events(flag='ER!', title=f'No {title}', description=None)
+        return render_template('error_page.html', message=f'You dont have {title}')
 
 
 # page to show list of all users
@@ -268,9 +270,9 @@ def all_users():
         users = User.query.order_by(User.username).all()
         return render_template('all_users.html', users=users, id=current_user.id)
     else:
-        e = "[!] You dont have permission to add new users"
-        log_exceptions(e)
-        return render_template('error_page.html', message=e)
+        title = 'No permission to see the list of users'
+        log_events(flag='ER!', title=title, description=None)
+        return render_template('error_page.html', message=title)
 
 
 @app.route('/update/user_<int:id>', methods=['GET', 'POST'])
@@ -302,22 +304,22 @@ def update_user(id):
                 user_to_update.password = new_password_hashed
                 message += f' Changed password.'
 
-            new_event = History(action=message, user=session['username'])
+            log_events(flag='ETU', title='Edit user', description=message)
             try:
-                db.session.add(new_event)
                 db.session.commit()
                 session['repited_user'] = False
                 return redirect('/all_users')
             except Exception as e:
                 db.session.rollback()
-                log_exceptions(e)
-                return render_template('error_page.html', message=e)
+                title = 'There was an issues updating user'
+                log_events(flag='ER?', title=title, description=e)
+                return render_template('error_page.html', message=title)
         else:
             return render_template('edit_user.html', user=user_to_update)
     else:
-        e = '[!] You do not have permission to edit users.'
-        log_exceptions(e)
-        return render_template('error_page.html', message=e)
+        title = 'permission to edit users'
+        log_events(flag='ER!', title=f'No {title}', description=None)
+        return render_template('error_page.html', message=f'You dont have {title}')
 
 
 # page where we delete user from database
@@ -327,28 +329,28 @@ def delete_user(id):
     if current_user.id != id:
         if 1 == current_user.role_id:
             user_to_delete = User.query.get_or_404(id)
-            new_event = History(action='Delete user', user=session['username'])
             try:
-                db.session.add(new_event)
                 db.session.delete(user_to_delete)
                 db.session.commit()
                 users = User.query.all()
+                log_events(flag='DEL', title='Delete user', description=f'Deleted user named: {user_to_delete.username}')
                 if len(users) > 0:
                     return redirect('/all_users')
                 else:
                     return redirect('/menu')
             except Exception as e:
                 db.session.rollback()
-                log_exceptions(e)
-                return render_template('error_page.html', message="[?] There was an issue deleting that user")
+                title = 'There was an issue deleting that user'
+                log_events(flag='ER?', title=title, description=e)
+                return render_template('error_page.html', message=title)
         else:
-            e = '[!] You do not have permission to delete users'
-            log_exceptions(e)
-            return render_template('error_page.html', message=e)
+            title = 'permission to delete users'
+            log_events(flag='ER!', title='Delete user', description=f'No {title}')
+            return render_template('error_page.html', message=f'You do not have {title}')
     else:
-        e = '[!] You cannot delete own user'
-        log_exceptions(e)
-        return render_template('error_page.html', message=e)
+        title = 'annot delete own user'
+        log_events(flag='ER!', title='Delete user', description=f'C{title}')
+        return render_template('error_page.html', message=f'You c{title}')
 
 
 ###################################################################################################################################
@@ -364,8 +366,9 @@ def all_words():
     try:
         return render_template('all_words.html')
     except Exception as e:
-        log_exceptions(e)
-        return render_template('error_page.html', message=e)
+        title = 'Unknown error while showing list of words'
+        log_events(flag='ER?', title=title, description=e)
+        return render_template('error_page.html', message=title)
 
 
 # get data for all_words page
@@ -390,21 +393,25 @@ def add_word():
             return render_template('add_word.html')
         else:
             if 1 == current_user.role_id:
-                new_event = History(action=f'Added new word: {content}', user=session['username'])
+                x = True
                 new_word = Word(content=content, searched=searched, definition=definition, source=source, added_by=added_by)
             else:
-                new_event = History(action=f'Added new proposal for: {content}', user=session['username'])
+                x = False
                 new_word = Proposal(name=content, reasoning=definition, user=added_by)
             try:
-                db.session.add(new_event)
+                if x:
+                    log_events(flag='CRW', title=f'Added new word: {content}', description=None)
+                else:
+                    log_events(flag='CRP', title=f'Added new proposal for: {content}', description=None)
                 db.session.add(new_word)
                 db.session.commit()
                 session['word_already_exists']=False
                 return redirect('/menu')
             except Exception as e:
                 db.session.rollback()
-                log_exceptions(e)
-                return render_template('error_page.html', message=f"[?] There was an issue adding word: {str(e)}")
+                title = f'There was an issue adding word/proposal: {content}'
+                log_events(flag='ER?', title=title, description=e)
+                return render_template('error_page.html', message=title)
     else:
         session['word_already_exists']=False
         return render_template('add_word.html')
@@ -424,22 +431,22 @@ def edit_word(id):
                 if 'clear_last_as_word' in request.form:
                     word_to_edit.last_as_word_of_literally = None
 
-                new_event = History(action=f'Edited word: {word_to_edit.content}', user=session['username'])
-                db.session.add(new_event)
+                log_events(flag='ETW', title=f'Edited word: {word_to_edit.content}', description=None)
                 db.session.commit()
 
                 return redirect(url_for('big_search'))
 
             except Exception as e:
                 db.session.rollback()
-                log_exceptions(e)
-                return render_template('error_page.html', message=f"[?] There was an issue updating this word: {str(e)}")
+                title = f'There was an issue updating this word: {word_to_edit.content}'
+                log_events(flag='ER?', title=title, description=e)
+                return render_template('error_page.html', message=title)
         else:
             return render_template('edit_word.html', word=word_to_edit)
     else:
-        e = "[!] You don't have permission to edit words"
-        log_exceptions(e)
-        return render_template('error_page.html', message=e)
+        title = "permission to edit words"
+        log_events(flag='ER!', title=f'No {title}', description=None)
+        return render_template('error_page.html', message=f'You dont have {e}')
 
 
 
@@ -448,29 +455,31 @@ def edit_word(id):
 def word_of_literally(id):
     if current_user.role_id != 3:
         word_to_edit = Word.query.get_or_404(id)
-        word_today = Word.query.filter(func.date(Word.last_as_word_of_literally) == datetime.utcnow().date()).all()
+        word_today = Word.query.filter(func.date(Word.last_as_word_of_literally) == datetime.now(POLAND_TZ).date()).all()
         if word_today:
-            e = f"[!] Word of the literally has been found for today and it is {word_today.content}"
-            log_exceptions(e)
-            return render_template('error_page.html', message=e)
+            description = f"Word of the literally has been found for today and it is {word_today.content}"
+            log_events(flag='LG!', title='Logic error', description=description)
+            return render_template('error_page.html', message=description)
         else:
             if word_to_edit:
-                word_to_edit.last_as_word_of_literally = datetime.utcnow()
+                word_to_edit.last_as_word_of_literally = datetime.now(POLAND_TZ)
                 try:
                     db.session.commit()
+                    log_events(flag='ETW', title='Logic error', description=f'Word {word_to_edit.content} has been marked as word of literally')
                     return render_template('loading_page.html')
                 except Exception as e:
                     db.session.rollback()
-                    log_exceptions(e)
-                    return render_template('error_page.html', message="[?] There was an issue adding word as LWL")
+                    title = "There was an issue adding word as word of literally"
+                    log_events(flag='ER?', title=title, description=None)
+                    return render_template('error_page.html', message=title)
             else:
-                e = "[!] There is something wrong with this word"
-                log_exceptions(e)
-                return render_template('error_page.html', message=e)
+                titlee = "There is something wrong with this word"
+                log_events(flag='ER?', title=title, description=None)
+                return render_template('error_page.html', message=title)
     else:
-        e = '[!] You do not have permission to mark word'
-        log_exceptions(e)
-        return render_template('error_page.html', message=e)
+        title = 'permission to mark word'
+        log_events(flag='ER?', title=f'no {title}', description=None)
+        return render_template('error_page.html', message=f'You dont have {title}')
 
 
 # PROPOSALS
@@ -483,11 +492,11 @@ def proposals():
             proposals = Proposal.query.order_by(Proposal.date).all()
             return render_template('all_proposals.html', proposals=proposals)
         except Exception as e:
-            log_exceptions(e)
+            log_events(e)
             return render_template('error_page.html', message=e)
     else:
         e = "[!] You don't have permission to see list of proposals"
-        log_exceptions(e)
+        log_events(e)
         return render_template('error_page.html', message=e)
 
 
@@ -508,11 +517,11 @@ def delete_proposal(id):
                 return redirect('/menu')
         except Exception as e:
             db.session.rollback()
-            log_exceptions(e)
+            log_events(e)
             return render_template('error_page.html', message="[?] There was an issue deleting that proposal")
     else:
         e = '[!] You do not have permission to delete proposals'
-        log_exceptions(e)
+        log_events(e)
         return render_template('error_page.html', message=e)
 
 
@@ -524,12 +533,13 @@ def show_proposal(id):
             proposal_to_show = Proposal.query.get_or_404(id)
             return render_template('show_proposal.html', proposal=proposal_to_show)
         except Exception as e:
-            log_exceptions(e)
+            log_events(e)
             return render_template('error_page.html', message="[?] There is not such proposal in database")
     else:
         e = "[!] You don't have permission to look into proposals"
-        log_exceptions(e)
+        log_events(e)
         return render_template('error_page.html', message=e)
+
 
 @app.route('/accept_proposal_<int:id>', methods=['POST','GET'])
 @login_required
@@ -555,11 +565,11 @@ def accept_proposal(id):
                 return redirect('/menu')
         except Exception as e:
             db.session.rollback()
-            log_exceptions(e)
+            log_events(e)
             return render_template('error_page.html', message="[?] There was an issue accepting that proposal")
     else:
         e = '[!] You do not have permission to accept proposals'
-        log_exceptions(e)
+        log_events(e)
         return render_template('error_page.html', message=e)
 
 
@@ -635,7 +645,7 @@ def found_words():
         return render_template('found_words.html', words=matching_words, previous_page='finder')
     except Exception as e:
         db.session.rollback()
-        log_exceptions(e)
+        log_events(e)
         render_template('error_page.html', message=f"[?] There was an issue while looking for words")
 
 
@@ -655,7 +665,7 @@ def show_word(id, previous_page):
         return render_template('show_word.html', word=word_to_show, previous_page=previous_page, todays_last_as_word_of_literally=todays_last_as_word_of_literally)
     except Exception as e:
         db.session.rollback()
-        log_exceptions(e)
+        log_events(e)
         return render_template('error_page.html', message=f"[?] There was an issue showing this word: {str(e)}")
 
 
@@ -672,11 +682,11 @@ def history():
             events = History.query.order_by(History.date.desc()).all()
             return render_template('history.html', events=events)
         except Exception as e:
-            log_exceptions(e)
+            log_events(e)
             return render_template('error_page.html', message=f"[?] There was an issue: {str(e)}")
     else:
         e = '[!] You do not have permission to look into history'
-        log_exceptions(e)
+        log_events(e)
         return render_template('error_page.html', message=e)
 
 
@@ -692,15 +702,15 @@ def deleting():
                 return render_template('loading_page.html')
             except Exception as e:
                 db.session.rollback()
-                log_exceptions(e)
+                log_events(e)
                 return render_template('error_page.html', message="[?] There was an issue deleting history")
         else:
             e = "[!] There is no history in database"
-            log_exceptions(e)
+            log_events(e)
             return render_template('error_page.html', message=e)
     else:
         e = '[!] You do not have permission to delete history'
-        log_exceptions(e)
+        log_events(e)
         return render_template('error_page.html', message=e)
 
 
@@ -719,11 +729,11 @@ def delete_event(id):
                 return redirect('/menu')
         except Exception as e:
             db.session.rollback()
-            log_exceptions(e)
+            log_events(e)
             return render_template('error_page.html', message="[?] There was an issue deleting that event")
     else:
         e = '[!] You do not have permission to delete events'
-        log_exceptions(e)
+        log_events(e)
         return render_template('error_page.html', message=e)
 
 
@@ -735,11 +745,11 @@ def show_event(id):
             event_to_show = History.query.get_or_404(id)
             return render_template('show_event.html', event=event_to_show)
         except Exception as e:
-            log_exceptions(e)
+            log_events(e)
             return render_template('error_page.html', message=f"[?] There was an issue: {str(e)}")
     else:
         e = '[!] You do not have permission to look into history events'
-        log_exceptions(e)
+        log_events(e)
         return render_template('error_page.html', message=e)
 
 
@@ -828,11 +838,11 @@ def analysis_bar_plots_menu():
         try:
             return render_template('analysis_bar_plots_menu.html')
         except Exception as e:
-            log_exceptions(e)
+            log_events(e)
             return render_template('error_page.html', message=f"[?] There was an issue: {str(e)}")
     else:
         e = '[!] You do not have permission to see analysis module'
-        log_exceptions(e)
+        log_events(e)
         return render_template('error_page.html', message=e)
 
 
@@ -895,11 +905,11 @@ def word_starting_with():
 
             return render_template('charts.html', p_not_sorted=p_not_sorted, p_sorted=p_sorted, title=title)
         except Exception as e:
-            log_exceptions(e)
+            log_events(e)
             return render_template('error_page.html', message=f"[?] There was an issue: {str(e)}")
     else:
         e = '[!] You do not have permission to see analysis module'
-        log_exceptions(e)
+        log_events(e)
         return render_template('error_page.html', message=e)
 
 
@@ -959,11 +969,11 @@ def unique_added_by_count():
 
             return render_template('charts.html', p_not_sorted=p_not_sorted, p_sorted=p_sorted,title=title)
         except Exception as e:
-            log_exceptions(e)
+            log_events(e)
             return render_template('error_page.html', message=f"[?] There was an issue: {str(e)}")
     else:
         e = '[!] You do not have permission to see analysis module'
-        log_exceptions(e)
+        log_events(e)
         return render_template('error_page.html', message=e)
 
 
@@ -1003,11 +1013,11 @@ def top_10_most_searched():
 
             return render_template('charts.html', p_not_sorted=p_not_sorted, p_sorted=p_sorted, title=title)
         except Exception as e:
-            log_exceptions(e)
+            log_events(e)
             return render_template('error_page.html', message=f"[?] There was an issue: {str(e)}")
     else:
         e = '[!] You do not have permission to see analysis module'
-        log_exceptions(e)
+        log_events(e)
         return render_template('error_page.html', message=e)
 
 
@@ -1083,11 +1093,11 @@ def searched_words_per_day_17():
 
             return render_template('charts.html', p_not_sorted=p_not_sorted, p_sorted=p_sorted, title=title)
         except Exception as e:
-            log_exceptions(e)
+            log_events(e)
             return render_template('error_page.html', message=f"[?] There was an issue: {str(e)}")
     else:
         e = '[!] You do not have permission to see analysis module'
-        log_exceptions(e)
+        log_events(e)
         return render_template('error_page.html', message=e)
 
 
@@ -1102,11 +1112,11 @@ def analysis_bubbles_menu():
         try:
             return render_template('analysis_bubbles_menu.html')
         except Exception as e:
-            log_exceptions(e)
+            log_events(e)
             return render_template('error_page.html', message=f"[?] There was an issue: {str(e)}")
     else:
         e = '[!] You do not have permission to see analysis module'
-        log_exceptions(e)
+        log_events(e)
         return render_template('error_page.html', message=e)
 
 
@@ -1123,11 +1133,11 @@ def top_10_latest_words_of_the_day():
 
             return render_template('bubbles.html', words=sorted_words, title=title, previous_page='bubble', column=column)
         except Exception as e:
-            log_exceptions(e)
+            log_events(e)
             return render_template('error_page.html', message=f"[?] There was an issue: {str(e)}")
     else:
         e = '[!] You do not have permission to see analysis module'
-        log_exceptions(e)
+        log_events(e)
         return render_template('error_page.html', message=e)
 
 
@@ -1144,11 +1154,11 @@ def top_10_latest_words_of_literally():
 
             return render_template('bubbles.html', words=sorted_words, title=title, previous_page='bubble', column=column)
         except Exception as e:
-            log_exceptions(e)
+            log_events(e)
             return render_template('error_page.html', message=f"[?] There was an issue: {str(e)}")
     else:
         e = '[!] You do not have permission to see analysis module'
-        log_exceptions(e)
+        log_events(e)
         return render_template('error_page.html', message=e)
 
 
@@ -1166,11 +1176,11 @@ def top_10_latest_searched():
 
             return render_template('bubbles.html', words=sorted_words, title=title, previous_page='bubble', column=column)
         except Exception as e:
-            log_exceptions(e)
+            log_events(e)
             return render_template('error_page.html', message=f"[?] There was an issue: {str(e)}")
     else:
         e = '[!] You do not have permission to see analysis module'
-        log_exceptions(e)
+        log_events(e)
         return render_template('error_page.html', message=e)
 
 

@@ -1,4 +1,4 @@
-from app import app, db, User, Word, Role, Proposal
+from app import app, db, User, Word, Role, Proposal, History
 
 # DECORATORS
 def decorator(func):
@@ -59,7 +59,21 @@ def check_proposals():
             print('date: ', proposal.date)
             print("="*20)
 
-check_users()
+# FUNCTION TO CHECK FEW PROPOSALS IN DB
+@decorator
+def check_proposals():
+    with app.app_context():
+        for event in db.session.query(History):
+            print('id: ', event.id)
+            print('flag: ', event.flag)
+            print('title: ', event.title)
+            print('description: ', event.description)
+            print('user: ', event.user)
+            print('date: ', event.date)
+            print("="*20)
+
+#check_users()
 #chech_words()
-check_roles()
+#check_roles()
 #check_proposals()
+check_proposals()

@@ -1,0 +1,12 @@
+ER?-Unknown error
+ER!-Hangled error
+ENT-Login or logout events
+ETU-Edit user
+ETW-Edit word
+CRU-Create user
+CRP-Create word proposal
+CRW-Create word
+DEL-Delition event
+LG!-Logical error
+ACP-Accept proposal
+SRC-Search event

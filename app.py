@@ -83,11 +83,16 @@ class Proposal(db.Model):
 
 class History(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    flag = db.Column(db.String(3), nullable=False) # ER?, ER!, ENT, ETU, ETW, CRU, CRP, CRW, DEL, LG!, ACP, SRC
+    flag = db.Column(db.String(3), db.ForeignKey('flags.name'))
     date = db.Column(db.DateTime, default=datetime.utcnow)
     title = db.Column(db.String(5000), nullable=False)
     description = db.Column(db.String(5000), nullable=True)
     user = db.Column(db.String(50), nullable=False)
+
+class Flags(db.Model):
+    name = db.Column(db.String(3), primary_key=True, nullable=False)
+    description = db.Column(db.String(5000), nullable=False)
+    events = db.relationship('History', backref='flags')
 
 
 ###################################################################################################################################

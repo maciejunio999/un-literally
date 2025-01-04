@@ -1,5 +1,5 @@
 from app import app
-from app import db, User, Word, Role, bcrypt
+from app import db, User, Word, Role, Flags, bcrypt
 import os
 import time
 import math
@@ -9,7 +9,8 @@ import logging
 
 # GLOBAL VARIABLES
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
-FILE = 'slowa_piecioliterowe.txt'
+WORDS_FILE = 'slowa_piecioliterowe.txt'
+EVENT_TYPES_FILE = 'event_types_desc.txt'
 NAME = 'whole.db'
 
 
@@ -68,7 +69,7 @@ def add_words():
     try:
         with app.app_context():
             session = db.session
-            with open(f'{DIR_PATH}\\{FILE}', "r", encoding='utf-8', newline='\n') as file:
+            with open(f'{DIR_PATH}\\{WORDS_FILE}', "r", encoding='utf-8', newline='\n') as file:
                 for i in file:
                     slowo, _ = i.split('\r')
                     word = Word(content=slowo, searched=0, source='Default from dictionary', added_by='Admin')
@@ -96,6 +97,25 @@ def add_roles():
         logging.error(traceback.format_exc())
         return False
 
+# ADD WORDS FROM BACKUPFILE
+@decorator
+def add_event_types():
+    try:
+        with app.app_context():
+            session = db.session
+            with open(f'{DIR_PATH}\\{EVENT_TYPES_FILE}', "r", encoding='utf-8', newline='\n') as file:
+                for i in file:
+                    event_type_name, description_ex = i.split('-')
+                    description = description_ex.removesuffix('\r\n')
+                    event_type = Flags(name=event_type_name, description=description)
+                    session.add(event_type)
+            session.commit()
+        return True
+    except Exception as e:
+        logging.error(traceback.format_exc())
+        return False
+
 create_database()
 add_words()
 add_roles()
+add_event_types()

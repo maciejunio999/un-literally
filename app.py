@@ -90,7 +90,8 @@ class History(db.Model):
     user = db.Column(db.String(50), nullable=False)
 
 class Flags(db.Model):
-    name = db.Column(db.String(3), primary_key=True, nullable=False)
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(3), nullable=False)
     description = db.Column(db.String(5000), nullable=False)
     events = db.relationship('History', backref='flags')
 
@@ -682,13 +683,18 @@ def show_word(id, previous_page):
 @login_required
 def history():
     if 1 == current_user.role_id:
-        try:
+        #try:
+            flags = Flags.query.order_by(Flags.name).all()
+            print(flags)
+            print(flags[0].name)
+            print(flags[1])
             events = History.query.order_by(History.date.desc()).all()
-            return render_template('history.html', events=events)
-        except Exception as e:
-            title = 'There was an issue getting events'
-            log_events(flag='ER?', title=title, description=e)
-            return render_template('error_page.html', message=title)
+            return render_template('history.html', events=events, flags=flags)
+        #except Exception as e:
+            #title = 'There was an issue getting events'
+            #print(str(e))
+            #log_events(flag='ER?', title=title, description=e)
+            #return render_template('error_page.html', message=title)
     else:
         title = 'permission to look into history'
         log_events(flag='ER!', title=f'No {title}', description=None)

@@ -77,6 +77,7 @@ def check_proposals():
 def check_event_flags():
     with app.app_context():
         for event_flag in db.session.query(Flags):
+            print('id: ', event_flag.id)
             print('name: ', event_flag.name)
             print('description: ', event_flag.description)
             print("="*20)

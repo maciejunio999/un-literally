@@ -8,11 +8,49 @@
         display: inline-block;
         margin-top: 7px;
     }
+
+    #filter-checkboxes {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        justify-content: flex-start;
+    }
+
+    .filter-checkbox-label {
+        cursor: pointer;
+        position: relative;
+    }
+
+    .filter-checkbox-label:hover {
+        color: #297400;
+    }
+
+    .filter-checkbox-label:hover .tooltip {
+        visibility: visible;
+    }
+
+    .tooltip {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        background-color: #297400;
+        color: white;
+        padding: 5px;
+        border-radius: 5px;
+        visibility: hidden;
+        white-space: nowrap;
+        font-size: 12px;
+        z-index: 1000;
+    }
+
+    .filter-checkbox {
+        margin-right: 8px;
+    }
+
 </style>
 {% endblock %}
 
 {% block body %}
-
 <div class="name">
     <h1 style="text-align: center; color: #297400; font-family: Arial; font-weight: bold;">Un-Literally</h1>
     <h2 style="text-align: center; color: #297400; text-decoration: underline; font-family: Arial; font-weight: bold;">History</h2>
@@ -24,12 +62,27 @@
     </div>
 
     <hr>
-    <div class="container_row">
 
+    <!-- Filters section -->
+    <div class="container_row">
+        <h4>Filter by flags:</h4>
+        <div id="filter-checkboxes">
+            {% for flag in flags %}
+                <label class="filter-checkbox-label">
+                    <input type="checkbox" class="filter-checkbox" data-flag="{{ flag.name }}"> {{ flag.name }}
+                    <span class="tooltip">{{ flag.description }}</span>
+                </label>
+            {% endfor %}
+        </div>
+    </div>
+
+    <hr>
+    
+    <div class="container_row">
         {% if events|length < 1 %}
             <h4 style="text-align: center;">There is no history saved</h4>
         {% else %}
-            <table>
+            <table id="events-table">
                 <tr>
                     <th>Event title</th>
                     <th>Username</th>
@@ -37,13 +90,12 @@
                     <th>Actions</th>
                 </tr>
                 {% for event in events %}
-                    <tr>
+                    <tr class="event-row" data-flags="{{ event.flag }}">
                         <td>{% if event.title|length > 150 %}
                             {{ event.title[:150] + ' ...' }}
                         {% else %}
                             {{ event.title }}
-                        {% endif %}
-                        </td>
+                        {% endif %}</td>
                         <td>{{ event.user }}</td>
                         <td>{{ event.date.strftime("%d %B %Y %H:%M") }}</td>
                         <td>
@@ -62,5 +114,32 @@
 <div class="container_column">
     <button class="accept_button" onclick="window.location='/delete/events'" style="margin-left: 10px;">Clear events</button>
 </div>
+
+<script>
+    document.querySelectorAll('.filter-checkbox').forEach(function(checkbox) {
+        checkbox.addEventListener('change', function() {
+            filterEvents();
+        });
+    });
+
+    function filterEvents() {
+        var selectedFlags = [];
+        
+        document.querySelectorAll('.filter-checkbox:checked').forEach(function(checkbox) {
+            selectedFlags.push(checkbox.getAttribute('data-flag'));
+        });
+
+        document.querySelectorAll('.event-row').forEach(function(row) {
+            var eventFlags = row.getAttribute('data-flags').split(' ');
+            var isVisible = selectedFlags.some(flag => eventFlags.includes(flag));
+
+            if (selectedFlags.length === 0 || isVisible) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+</script>
 
 {% endblock %}

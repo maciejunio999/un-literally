@@ -167,6 +167,18 @@ def log_events(flag, title, description):
 
 
 ###################################################################################################################################
+#   Error handling
+###################################################################################################################################
+
+@app.route('/word_of_the_day', methods=['POST'])
+def word_of_the_day():
+    word_today = Word.query.filter(func.date(Word.last_as_word_of_the_day) == datetime.now(POLAND_TZ).date()).all()
+    if word_today:
+        return None
+    else:
+        return 1
+
+###################################################################################################################################
 #   Main pages
 ###################################################################################################################################
 
@@ -665,6 +677,7 @@ def show_word(id, previous_page):
     if word_to_show.last_as_word_of_literally == datetime.now(POLAND_TZ).date():
         todays_last_as_word_of_literally = False
     try:
+        db.session.commit()
         log_events(flag='SRC', title=f'Searched for word with {word_to_show.content}', description=None)
         return render_template('show_word.html', word=word_to_show, previous_page=previous_page, todays_last_as_word_of_literally=todays_last_as_word_of_literally)
     except Exception as e:
@@ -1003,6 +1016,9 @@ def top_10_most_searched():
             title = request.args.get('title', 'Top 10 most searched words')
 
             result = get_top_10_most_searched()
+            if result is False:
+                return render_template('error_page.html', message="No words have been searched yet.")
+
             sorted_by_content = sorted(result, key=lambda x: x['content'])
             content_x = [item['content'] for item in sorted_by_content]
             searched_y = [item['searched'] for item in sorted_by_content]
@@ -1038,6 +1054,7 @@ def top_10_most_searched():
         title = 'permission to see analysis module'
         log_events(flag='ER!', title=f'No {title}', description=None)
         return render_template('error_page.html', message=f'You dont have {title}')
+
 
 
 @app.route('/searched_words_per_day_17', methods=['GET'])

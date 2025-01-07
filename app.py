@@ -10,6 +10,7 @@ import requests
 from collections import defaultdict
 from bokeh.embed import components
 from bokeh.plotting import figure
+from random import choice
 
 app = Flask(__name__)
 
@@ -170,13 +171,70 @@ def log_events(flag, title, description):
 #   Error handling
 ###################################################################################################################################
 
-@app.route('/word_of_the_day', methods=['POST'])
-def word_of_the_day():
+@app.route('/see_word_of_the_day', methods=['GET'])
+@login_required
+def see_word_of_the_day():
+    return render_template('show_word.html')
+
+
+@app.route('/set_word_of_the_day', methods=['GET'])
+def set_word_of_the_day():
+    today = datetime.now(POLAND_TZ).date()
+    yesterday = today - timedelta(days=1)
+
+    recent_word = db.session.query(Word).filter(Word.last_as_word_of_the_day != None).order_by(Word.last_as_word_of_the_day.desc()).first()
+
+    if recent_word:
+        if recent_word.last_as_word_of_the_day.date() == today:
+            return jsonify({"message": "Today's word of the day is already set."}), 200
+        
+        if recent_word.last_as_word_of_the_day.date() == yesterday:
+            available_words = db.session.query(Word).filter(Word.last_as_word_of_the_day == None).all()
+            if available_words:
+                random_word = choice(available_words)
+                random_word.last_as_word_of_the_day = today
+                db.session.commit()
+                return jsonify({"message": "Word for today has been set."}), 200
+
+        else:
+            date_to_assign = recent_word.last_as_word_of_the_day.date() + timedelta(days=1)
+            while True:
+                available_words = db.session.query(Word).filter(Word.last_as_word_of_the_day == None).all()
+                if not available_words:
+                    break
+                
+                random_word = choice(available_words)
+                random_word.last_as_word_of_the_day = date_to_assign
+                db.session.commit()
+                
+                date_to_assign += timedelta(days=1)
+
+            return jsonify({"message": f"Word of the day has been set from {recent_word.last_as_word_of_the_day.date()} to today."}), 200
+
+    else:
+        available_words = db.session.query(Word).filter(Word.last_as_word_of_the_day == None).all()
+        if available_words:
+            random_word = choice(available_words)
+            random_word.last_as_word_of_the_day = today
+            db.session.commit()
+            return jsonify({"message": f"Word of the day has been set to {random_word.content}."}), 200
+        else:
+            return jsonify({"error": "No words available for setting as word of the day."}), 404
+
+
+
+def call_for_word_of_the_day():
     word_today = Word.query.filter(func.date(Word.last_as_word_of_the_day) == datetime.now(POLAND_TZ).date()).all()
     if word_today:
         return None
-    else:
-        return 1
+    try:
+        response = requests.post("http://127.0.0.1:80/set_word_of_the_day")
+        response.raise_for_status()
+    except Exception as e:
+        title = 'There was an issue with choosing word of the day'
+        log_events(flag='ER?', title=title, description=e)
+        return render_template('error_page.html', message=title)
+
 
 ###################################################################################################################################
 #   Main pages
@@ -210,6 +268,7 @@ def login():
                 login_user(user)
                 log_events(flag='ENT', title='User log in', description=None)
                 try:
+                    call_for_word_of_the_day()
                     session['username_used']=False
                     return redirect('/menu')
                 except Exception as e:

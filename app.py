@@ -80,7 +80,7 @@ class Proposal(db.Model):
     date = db.Column(db.DateTime, default=datetime.utcnow)
     reasoning = db.Column(db.String(5000), nullable=True)
     user = db.Column(db.String(50), nullable=False)
-    upvoted = db.Column(db.Integer, nullable=False)
+    upvoted = db.Column(db.Integer, nullable=False, default=1)
 
 class History(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -111,10 +111,16 @@ def validate_username(username):
 # validate if such proposition exists in database Word or Proposal columns
 def validate_word_content(content):
         existing_word_content = Word.query.filter_by(content=content).first()
-        existing_proposal_content = Proposal.query.filter_by(name=content).first()
-        if existing_word_content or existing_proposal_content:
+        if existing_word_content:
             return True
 
+
+# validate if such proposition exists in database Word or Proposal columns
+def validate_proposal_content(content):
+    existing_proposal_content = Proposal.query.filter_by(name=content).first()
+    if existing_proposal_content:
+        return True
+        
 
 ###################################################################################################################################
 #   Error handling
@@ -462,7 +468,7 @@ def add_word():
     if request.method == 'POST':
         content = request.form['content'].strip()
         searched = 0
-        definition = request.form['definition'].strip()
+        definition = 'brak' if len(request.form['definition'].strip()) == 0 else request.form['definition'].strip()
         source = "Added by user"
         added_by = session['username']
         if validate_word_content(content):
@@ -471,16 +477,28 @@ def add_word():
         else:
             if 1 == current_user.role_id:
                 x = True
-                new_word = Word(content=content, searched=searched, definition=definition, source=source, added_by=added_by)
+                new_record = Word(content=content, searched=searched, definition=definition, source=source, added_by=added_by)
             else:
-                x = False
-                new_word = Proposal(name=content, reasoning=definition, user=added_by)
-            try:
-                if x:
-                    log_events(flag='CRW', title=f'Added new word: {content}', description=None)
+                if validate_proposal_content(content):
+                    x = None
+                    existing_proposal = Proposal.query.filter_by(name=content).first()
+                    new_reasoning = f"[{existing_proposal.user}]:\n{existing_proposal.reasoning}\n[{session['username']}]: \n{definition}"
+                    if not (len(new_reasoning) > 5000):
+                        existing_proposal.reasoning = new_reasoning
+                    existing_proposal.user = session['username']
+                    existing_proposal.upvoted += 1
                 else:
+                    x = False
+                    new_record = Proposal(name=content, reasoning=definition, user=added_by)
+            try:
+                if True == x:
+                    db.session.add(new_record)
+                    log_events(flag='CRW', title=f'Added new word: {content}', description=None)
+                elif False == x:
+                    db.session.add(new_record)
                     log_events(flag='CRP', title=f'Added new proposal for: {content}', description=None)
-                db.session.add(new_word)
+                else:
+                    log_events(flag='CRP', title=f'Upvoted proposal for: {content}', description=None)
                 db.session.commit()
                 session['word_already_exists']=False
                 return redirect('/menu')

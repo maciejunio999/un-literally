@@ -4,6 +4,49 @@
     <title>Un-Literally</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #ffffff;
+        }
+
+        .menu_header h1 {
+            color: #297400;
+            font-weight: bold;
+            font-size: 36px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        .menu_header h2 {
+            color: #297400;
+            font-weight: bold;
+            font-size: 28px;
+            margin-bottom: 20px;
+            text-decoration: underline;
+            text-align: center;
+        }
+
+        .menu_button {
+            background-color: #297400;
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            margin: 10px 0;
+            border-radius: 5px;
+            width: 100%;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .menu_button:hover {
+            background-color: #1e5e00;
+        }
+
+        .menu_button i {
+            margin-right: 10px;
+        }
+
         .logout-button {
             position: absolute;
             top: 10px;
@@ -11,10 +54,10 @@
             background-color: #e74c3c;
             color: white;
             border: none;
-            padding: 10px 15px;
+            padding: 12px 20px;
             border-radius: 5px;
-            cursor: pointer;
             font-size: 16px;
+            cursor: pointer;
             display: flex;
             align-items: center;
         }
@@ -22,49 +65,73 @@
         .logout-button i {
             margin-right: 5px;
         }
+
+        .container_column {
+            max-width: 400px;
+            margin: auto;
+            padding: 20px;
+        }
+
+        .container_column hr {
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+
+        .menu-header {
+            font-size: 18px;
+            font-weight: bold;
+            color: #297400;
+        }
+
+        .menu-group {
+            margin-bottom: 30px;
+            text-align: center;
+        }
     </style>
 {% endblock %}
 
 {% block body %}
-<div class="menu_header">
-    <h1 style="text-align: center; color: #297400; font-family: Arial; font-weight: bold;">Un-Literally</h1>
-    <h2 style="text-align: center; color: #297400; text-decoration: underline; font-family: Arial; font-weight: bold;">Menu</h2>
-</div>
+    <div class="menu_header">
+        <h1>Un-Literally</h1>
+        <h2>Menu</h2>
+    </div>
 
-<div class="name">
-    <hr>
-    <p>Words module</p>
-    <button class="menu_button" onclick="window.location='/big_search'">Big search</button>
-    <br><br>
-    <button class="menu_button" onclick="window.location='/add_word'">Add Word</button>
-    <br><br>
-    <button class="menu_button" onclick="window.location='/all_words'">All Words</button>
-    {% if current_user.role_id == 1 %}
-        <br><br>
-        <button class="menu_button" onclick="window.location='/all_proposals'">All Proposals</button>
-        <hr>
-        <p>Users module</p>
-        <button class="menu_button" onclick="window.location='/all_users'">All Users</button>
-        <br><br>
-        <button class="menu_button" onclick="window.location='/admin_register'">Add User</button>
-    {% endif %}
-    {% if current_user.role_id != 3 %}
-        <hr>
-        <p>Analysis module</p>
-        <button class="menu_button" onclick="window.location='/analysis_bar_plots_menu'">Plots</button>
-        <br><br>
-        <button class="menu_button" onclick="window.location='/analysis_bubbles_menu'">Bubbles</button>
-    {% endif %}
-    {% if current_user.role_id == 1 %}
-        <hr>
-        <p>Extra module</p>
-        <button class="menu_button" onclick="window.location='/history'">History</button>
-    {% endif %}
-    <hr>
-</div>
+    <div class="container_column">
+        <div class="menu-group">
+            <p class="menu-header">Words module</p>
+            <button class="menu_button" onclick="window.location='/big_search'"><i class="fas fa-search"></i> Big search</button>
+            <button class="menu_button" onclick="window.location='/add_word'"><i class="fas fa-plus"></i> Add Word</button>
+            <button class="menu_button" onclick="window.location='/all_words'"><i class="fas fa-list"></i> All Words</button>
+            {% if current_user.role_id == 1 %}
+                <button class="menu_button" onclick="window.location='/all_proposals'"><i class="fas fa-th-list"></i> All Proposals</button>
+            {% endif %}
+        </div>
 
-<button class="logout-button" onclick="window.location='/logout'">
-    <i class="fas fa-sign-out-alt"></i> Log out
-</button>
+        {% if current_user.role_id == 1 %}
+        <div class="menu-group">
+            <p class="menu-header">Users module</p>
+            <button class="menu_button" onclick="window.location='/all_users'"><i class="fas fa-users"></i> All Users</button>
+            <button class="menu_button" onclick="window.location='/admin_register'"><i class="fas fa-user-plus"></i> Add User</button>
+        </div>
+        {% endif %}
 
+        {% if current_user.role_id != 3 %}
+        <div class="menu-group">
+            <p class="menu-header">Analysis module</p>
+            <button class="menu_button" onclick="window.location='/analysis_bar_plots_menu'"><i class="fas fa-chart-bar"></i> Plots</button>
+            <button class="menu_button" onclick="window.location='/analysis_bubbles_menu'"><i class="fa-regular fa-circle-dot"></i> Bubbles</button>
+        </div>
+        {% endif %}
+
+        {% if current_user.role_id == 1 %}
+        <div class="menu-group">
+            <p class="menu-header">Extra module</p>
+            <button class="menu_button" onclick="window.location='/history'"><i class="fas fa-history"></i> History</button>
+        </div>
+        {% endif %}
+    </div>
+
+    <button class="logout-button" onclick="window.location='/logout'">
+        <i class="fas fa-sign-out-alt"></i> Log out
+    </button>
 {% endblock %}

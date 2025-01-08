@@ -1,44 +1,157 @@
 {% extends 'base.html' %}
 
-
 {% block head %}
     <title>Un-Literally</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #ffffff;
+        }
+
+        .menu_header h1 {
+            color: #297400;
+            font-weight: bold;
+            font-size: 36px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .menu_header h2 {
+            color: #297400;
+            font-weight: bold;
+            font-size: 28px;
+            margin-bottom: 20px;
+            text-decoration: underline;
+            text-align: center;
+        }
+
+        .container_column {
+            max-width: 800px;
+            margin: auto;
+            padding: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-evenly;
+        }
+
+        .menu-button-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .menu-button {
+            background-color: #297400;
+            color: white;
+            border: none;
+            padding: 20px;
+            width: 150px;
+            height: 150px;
+            text-align: center;
+            font-size: 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: background-color 0.3s ease;
+        }
+
+        .menu-button:hover {
+            background-color: #1e5e00;
+        }
+
+        .menu-button i {
+            font-size: 30px;
+            margin-bottom: 10px;
+        }
+
+        .logout-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+
+        .logout-button i {
+            margin-right: 5px;
+        }
+
+        .menu-button-container p {
+            color: #297400;
+            font-weight: bold;
+        }
+
+        .menu-header {
+            font-size: 18px;
+            font-weight: bold;
+            color: #297400;
+        }
+
+        @media (max-width: 600px) {
+            .menu-button {
+                width: 120px;
+                height: 120px;
+                font-size: 14px;
+            }
+            .menu_header h1, .menu_header h2 {
+                font-size: 28px;
+            }
+        }
+    </style>
 {% endblock %}
 
-
 {% block body %}
+    <div class="menu_header">
+        <h1>Un-Literally</h1>
+        <h2>Analysis module menu</h2>
+    </div>
 
-<div class="menu_header">
-    <h1 style="text-align: center; color: #297400; font-family: Arial; font-weight: bold;">Un-Literally</h1>
-    <h2 style="text-align: center; color: #297400; text-decoration: underline; font-family: Arial; font-weight: bold;">Analysis module menu</h2>
-</div>
+    <div class="container_column">
+        <div class="menu-button-container">
+            <button class="menu-button" onclick="window.location='/word_starting_with'">
+                <i class="fas fa-chart-bar"></i> 
+                Number of words starting with each letter
+            </button>
+            <button class="menu-button" onclick="window.location='/unique_added_by_count'">
+                <i class="fas fa-chart-bar"></i> 
+                Number of words added by users
+            </button>
+            <button class="menu-button" onclick="window.location='/top_10_most_searched'">
+                <i class="fas fa-chart-bar"></i> 
+                Top 10 most searched words
+            </button>
+            <button class="menu-button" onclick="window.location='/searched_words_per_day_17'">
+                <i class="fas fa-chart-bar"></i> 
+                Searched words per day, last 17 days
+            </button>
+            <button class="menu-button" onclick="window.location='/top_10_latest_words_of_the_day'">
+                <i class="fas fa-chart-bar"></i> 
+                10 latest words of the day
+            </button>
+            <button class="menu-button" onclick="window.location='/top_10_latest_words_of_literally'">
+                <i class="fas fa-chart-bar"></i> 
+                10 latest words of literally
+            </button>
+        </div>
 
-<div class="name">
-    <hr>
-    <p>Number of words starting with each letter</p>
-    <button class="menu_button" onclick="window.location='/word_starting_with'">Chart 1</button>
-    <br><br>
-    <p>Number of words added by users</p>
-    <button class="menu_button" onclick="window.location='/unique_added_by_count'">Chart 2</button>
-    <br><br>
-    <p>Top 10 most searched words</p>
-    <button class="menu_button" onclick="window.location='/top_10_most_searched'">Chart 3</button>
-    <br><br>
-    <p>Searched words per day, last 17 days</p>
-    <button class="menu_button" onclick="window.location='/searched_words_per_day_17'">Chart 4</button>
-    <br><br>
-    <p>10 latest words of the day</p>
-    <button class="menu_button" onclick="window.location='/top_10_latest_words_of_the_day'">Chart 5</button>
-    <br><br>
-    <p>10 latest words of literally</p>
-    <button class="menu_button" onclick="window.location='/top_10_latest_words_of_literally'">Chart 6</button>
-    <br><br>
-    <p>10 latest searched</p>
-    <button class="menu_button" onclick="window.location='/top_10_latest_searched'">Chart 7</button>
-    <hr>
-    <button type="button" class="back_button" onclick="window.location='/menu'">Back</button>
-    <br><br>
-</div>
+        <hr>
+        <button type="button" class="back_button" onclick="window.location='/menu'">Back</button>
+    </div>
 
-</div>
+    <button class="logout-button" onclick="window.location='/logout'">
+        <i class="fas fa-sign-out-alt"></i> Log out
+    </button>
 {% endblock %}

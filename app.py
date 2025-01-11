@@ -174,7 +174,7 @@ def log_events(flag, title, description):
 
 
 ###################################################################################################################################
-#   Error handling
+#   Wrod of the day
 ###################################################################################################################################
 
 @app.route('/see_word_of_the_day', methods=['GET'])
@@ -183,58 +183,59 @@ def see_word_of_the_day():
     return render_template('show_word.html')
 
 
-@app.route('/set_word_of_the_day', methods=['GET'])
+@app.route('/set_word_of_the_day', methods=['GET', 'POST'])
 def set_word_of_the_day():
     today = datetime.now(POLAND_TZ).date()
     yesterday = today - timedelta(days=1)
 
     recent_word = db.session.query(Word).filter(Word.last_as_word_of_the_day != None).order_by(Word.last_as_word_of_the_day.desc()).first()
 
-    if recent_word:
-        if recent_word.last_as_word_of_the_day.date() == today:
-            return jsonify({"message": "Today's word of the day is already set."}), 200
-        
-        if recent_word.last_as_word_of_the_day.date() == yesterday:
-            available_words = db.session.query(Word).filter(Word.last_as_word_of_the_day == None).all()
-            if available_words:
-                random_word = choice(available_words)
-                random_word.last_as_word_of_the_day = today
-                db.session.commit()
-                return jsonify({"message": "Word for today has been set."}), 200
+    if recent_word and recent_word.last_as_word_of_the_day.date() == today:
+        return jsonify({"message": "Today's word of the day is already set."}), 200
 
-        else:
-            date_to_assign = recent_word.last_as_word_of_the_day.date() + timedelta(days=1)
-            while True:
-                available_words = db.session.query(Word).filter(Word.last_as_word_of_the_day == None).all()
-                if not available_words:
-                    break
-                
-                random_word = choice(available_words)
-                random_word.last_as_word_of_the_day = date_to_assign
-                db.session.commit()
-                
-                date_to_assign += timedelta(days=1)
-
-            return jsonify({"message": f"Word of the day has been set from {recent_word.last_as_word_of_the_day.date()} to today."}), 200
-
-    else:
+    if recent_word and recent_word.last_as_word_of_the_day.date() == yesterday:
         available_words = db.session.query(Word).filter(Word.last_as_word_of_the_day == None).all()
         if available_words:
             random_word = choice(available_words)
             random_word.last_as_word_of_the_day = today
             db.session.commit()
-            return jsonify({"message": f"Word of the day has been set to {random_word.content}."}), 200
-        else:
-            return jsonify({"error": "No words available for setting as word of the day."}), 404
+            return jsonify({"message": "Word for today has been set."}), 200
+
+    if recent_word and recent_word.last_as_word_of_the_day.date() < yesterday:
+        date_to_assign = recent_word.last_as_word_of_the_day.date() + timedelta(days=1)
+        available_words = db.session.query(Word).filter(Word.last_as_word_of_the_day == None).all()
+
+        while available_words:
+            random_word = choice(available_words)
+            random_word.last_as_word_of_the_day = date_to_assign
+            db.session.commit()
+
+            if date_to_assign == today:
+                break
+
+            date_to_assign += timedelta(days=1)
+
+            available_words = db.session.query(Word).filter(Word.last_as_word_of_the_day == None).all()
+
+        return jsonify({"message": f"Word of the day has been set from {recent_word.last_as_word_of_the_day.date()} to today."}), 200
+
+    available_words = db.session.query(Word).filter(Word.last_as_word_of_the_day == None).all()
+    if available_words:
+        random_word = choice(available_words)
+        random_word.last_as_word_of_the_day = today
+        db.session.commit()
+        return jsonify({"message": f"Word of the day has been set to {random_word.content}."}), 200
+    else:
+        return jsonify({"error": "No words available for setting as word of the day."}), 404
 
 
-
+# Funkcja, która wywołuje /set_word_of_the_day
 def call_for_word_of_the_day():
     word_today = Word.query.filter(func.date(Word.last_as_word_of_the_day) == datetime.now(POLAND_TZ).date()).all()
     if word_today:
         return None
     try:
-        response = requests.post("http://127.0.0.1:80/set_word_of_the_day")
+        response = requests.post("http://127.0.0.1:80/set_word_of_the_day")  # Używamy portu 5000, nie 80
         response.raise_for_status()
     except Exception as e:
         title = 'There was an issue with choosing word of the day'
@@ -773,18 +774,14 @@ def show_word(id, previous_page):
 @login_required
 def history():
     if 1 == current_user.role_id:
-        #try:
+        try:
             flags = Flags.query.order_by(Flags.name).all()
-            print(flags)
-            print(flags[0].name)
-            print(flags[1])
             events = History.query.order_by(History.date.desc()).all()
             return render_template('history.html', events=events, flags=flags)
-        #except Exception as e:
-            #title = 'There was an issue getting events'
-            #print(str(e))
-            #log_events(flag='ER?', title=title, description=e)
-            #return render_template('error_page.html', message=title)
+        except Exception as e:
+            title = 'There was an issue getting events'
+            log_events(flag='ER?', title=title, description=e)
+            return render_template('error_page.html', message=title)
     else:
         title = 'permission to look into history'
         log_events(flag='ER!', title=f'No {title}', description=None)
@@ -1289,7 +1286,6 @@ def top_10_latest_searched():
             
             result = get_latest(column=column)
             sorted_words = sorted(result, key=lambda x: x['last_search'], reverse=True)
-            print(sorted_words[0]['last_search'])
 
             return render_template('bubbles.html', words=sorted_words, title=title, previous_page='bubble', column=column)
         except Exception as e:

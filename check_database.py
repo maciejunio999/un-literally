@@ -19,7 +19,7 @@ def check_users():
 
 # FUNCTION TO CHECK FEW WORDS IN DB
 @decorator
-def chech_words():
+def check_words():
     with app.app_context():
         i = 0
         for word in db.session.query(Word):
@@ -83,7 +83,7 @@ def check_event_flags():
             print("="*20)
 
 #check_users()
-#chech_words()
+#check_words()
 #check_roles()
 #check_proposals()
 #check_proposals()

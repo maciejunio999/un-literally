@@ -180,7 +180,21 @@ def log_events(flag, title, description):
 @app.route('/see_word_of_the_day', methods=['GET'])
 @login_required
 def see_word_of_the_day():
-    return render_template('show_word.html')
+    try:
+        call_for_word_of_the_day()
+        today = datetime.now(POLAND_TZ).date()
+        word_to_show = db.session.query(Word).filter(Word.last_as_word_of_the_day != None).order_by(Word.last_as_word_of_the_day.desc()).first()
+        if today != word_to_show.last_as_word_of_the_day.date():
+            return True
+        else:
+            todays_last_as_word_of_literally = False
+            previous_page = 'word_of_the_day'
+            title = 'Word of the day!'
+            return render_template('show_word.html', word=word_to_show, previous_page=previous_page, todays_last_as_word_of_literally=todays_last_as_word_of_literally, title=title)
+    except Exception as e:
+        title = 'There was an issue while looking for word of the day'
+        log_events(flag='ER?', title=title, description=e)
+        return render_template('error_page.html', message=title)
 
 
 @app.route('/set_word_of_the_day', methods=['GET', 'POST'])
@@ -235,7 +249,7 @@ def call_for_word_of_the_day():
     if word_today:
         return None
     try:
-        response = requests.post("http://127.0.0.1:80/set_word_of_the_day")  # Używamy portu 5000, nie 80
+        response = requests.post("http://127.0.0.1:80/set_word_of_the_day")
         response.raise_for_status()
     except Exception as e:
         title = 'There was an issue with choosing word of the day'
@@ -752,12 +766,13 @@ def show_word(id, previous_page):
     word_to_show.searched += 1
     word_to_show.last_search = datetime.now(POLAND_TZ)
     todays_last_as_word_of_literally = True
+    title = 'Selected word to show'
     if word_to_show.last_as_word_of_literally == datetime.now(POLAND_TZ).date():
         todays_last_as_word_of_literally = False
     try:
         db.session.commit()
         log_events(flag='SRC', title=f'Searched for word with {word_to_show.content}', description=None)
-        return render_template('show_word.html', word=word_to_show, previous_page=previous_page, todays_last_as_word_of_literally=todays_last_as_word_of_literally)
+        return render_template('show_word.html', word=word_to_show, previous_page=previous_page, todays_last_as_word_of_literally=todays_last_as_word_of_literally, title=title)
     except Exception as e:
         db.session.rollback()
         title = f'There was an issue looking up for word: {word_to_show.content}'
@@ -1237,6 +1252,7 @@ def analysis_bubbles_menu():
 def top_10_latest_words_of_the_day():
     if current_user.role_id != 3:
         try:
+            call_for_word_of_the_day()
             column = request.args.get('column', 'LWD')
             title = request.args.get('title', 'Latest Words of The Day')
             

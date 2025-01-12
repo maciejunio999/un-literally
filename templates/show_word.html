@@ -7,7 +7,7 @@
 {% block body %}
 <div class="container_column">
 
-    <h1 style="color: #297400; font-size: 25px;">Selected word to show</h1>
+    <h1 style="color: #297400; font-size: 25px;">{{ title }}</h1>
 
     <div class="info_block">
         <p class="info_label">Word:</p>
@@ -19,15 +19,24 @@
         <p class="info_value">{{word.searched}}</p>
     </div>
 
-    <div class="info_block">
-        <p class="info_label">Last search date:</p>
-        <p class="info_value">{{word.last_search.strftime("%d %B %Y %H:%M")}}</p>
-    </div>
+    {% if word.last_search is not none %}
+        <div class="info_block">
+            <p class="info_label">Last search date:</p>
+            <p class="info_value">{{word.last_search.strftime("%d %B %Y %H:%M")}}</p>
+        </div>
+    {% endif %}
 
     {% if word.last_as_word_of_literally is not none %}
         <div class="info_block">
             <p class="info_label">Last time as word of literally:</p>
             <p class="info_value">{{word.last_as_word_of_literally.strftime("%d %B %Y")}}</p>
+        </div>
+    {% endif %}
+
+    {% if word.last_as_word_of_the_day is not none %}
+        <div class="info_block">
+            <p class="info_label">Last time as word of the day:</p>
+            <p class="info_value">{{word.last_as_word_of_the_day.strftime("%d %B %Y")}}</p>
         </div>
     {% endif %}
 
@@ -50,13 +59,15 @@
     {% endif %}
 
     <div class="button-container">
-        {% if current_user.role_id == 1 %}
+        {% if current_user.role_id == 1 and previous_page != 'word_of_the_day' %}
         <button class="accept_button" onclick="window.location='/edit_word_{{word.id}}'">Edit</button>
         {% endif %}
         {% if previous_page == 'finder' %}
             <button class="back_button" onclick="window.location='/menu'" style="margin-left: 10px;">Back</button>
         {% elif previous_page == 'bubble' %}
             <button class="back_button" onclick="window.location='/top_10_latest_words_of_literally'" style="margin-left: 10px;">Back</button>
+        {% elif previous_page == 'word_of_the_day' %}
+            <button class="back_button" onclick="window.location='/menu'" style="margin-left: 10px;">Back</button>
         {% endif %}
     </div>
 </div>

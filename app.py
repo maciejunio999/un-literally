@@ -859,13 +859,31 @@ def show_event(id):
     if 1 == current_user.role_id:
         try:
             event_to_show = History.query.get_or_404(id)
-            return render_template('show_event.html', event=event_to_show)
+            flag = Flags.query.filter(Flags.name == event_to_show.flag).first()
+            return render_template('show_event.html', event=event_to_show, flag=flag)
         except Exception as e:
             title = 'There was an issue deleting this event'
             log_events(flag='ER?', title=title, description=e)
             return render_template('error_page.html', message=title)
     else:
         title = 'permission to look into history events'
+        log_events(flag='ER!', title=f'No {title}', description=None)
+        return render_template('error_page.html', message=f'You dont have {title}')
+
+
+# menu page
+@app.route('/history_plots_menu', methods=['GET'])
+@login_required
+def history_plots_menu():
+    if current_user.role_id == 1:
+        try:
+            return render_template('history_plots_menu.html')
+        except Exception as e:
+            title = 'There was an issue dispaying menu'
+            log_events(flag='ER?', title=title, description=e)
+            return render_template('error_page.html', message=title)
+    else:
+        title = 'permission to see history module'
         log_events(flag='ER!', title=f'No {title}', description=None)
         return render_template('error_page.html', message=f'You dont have {title}')
 

@@ -47,6 +47,69 @@
         margin-right: 8px;
     }
 
+    .action-buttons {
+        display: flex;
+        gap: 20px;
+        justify-content: center;
+        margin-bottom: 20px;
+    }
+
+    .action-button {
+        width: 100px;
+        height: 100px;
+        background-color: #297400;
+        color: white;
+        border: none;
+        font-size: 18px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border-radius: 10px;
+        cursor: pointer;
+        text-align: center;
+        box-sizing: border-box;
+    }
+
+    .action-button i {
+        font-size: 24px;
+        margin-bottom: 5px;
+    }
+
+    .action-button:hover {
+        background-color: #1e5e00;
+    }
+
+    #events-table {
+        width: 100%;
+        max-width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+        margin: 10px 275px 40px 275px;
+    }
+
+    #events-table th, #events-table td {
+        padding: 12px;
+        text-align: left;
+        border: 1px solid #ddd;
+        overflow: hidden;
+    }
+
+    #events-table th {
+        background-color: #f4f4f4;
+    }
+
+    #events-table tr:nth-child(even) {
+        background-color: #f9f9f9;
+    }
+
+    #events-table td a {
+        color: #297400;
+        text-decoration: none;
+    }
+
+    #events-table td a:hover {
+        text-decoration: underline;
+    }
 </style>
 {% endblock %}
 
@@ -56,64 +119,65 @@
     <h2 style="text-align: center; color: #297400; text-decoration: underline; font-family: Arial; font-weight: bold;">History</h2>
 </div>
 
-<div>
-    <div class="container_column">
-        <button class="back_button" onclick="window.location='/menu'" style="margin-left: 10px;">Back</button>
+<div class="action-buttons">
+    <button class="action-button" onclick="window.location='/history_plots_menu'">
+        <i class="fas fa-chart-bar"></i> Plots
+    </button>
+    <button class="action-button" onclick="window.location='/menu'">
+        <i class="fas fa-arrow-left"></i> Back
+    </button>
+    <button class="action-button" onclick="window.location='/delete/events'">
+        <i class="fas fa-trash"></i> Clear Events
+    </button>
+</div>
+
+<hr>
+
+<div class="container_row">
+    <h4>Filter by flags:</h4>
+    <div id="filter-checkboxes">
+        {% for flag in flags %}
+            <label class="filter-checkbox-label">
+                <input type="checkbox" class="filter-checkbox" data-flag="{{ flag.name }}"> {{ flag.name }}
+                <span class="tooltip">{{ flag.description }}</span>
+            </label>
+        {% endfor %}
     </div>
+</div>
 
-    <hr>
+<hr>
 
-    <!-- Filters section -->
-    <div class="container_row">
-        <h4>Filter by flags:</h4>
-        <div id="filter-checkboxes">
-            {% for flag in flags %}
-                <label class="filter-checkbox-label">
-                    <input type="checkbox" class="filter-checkbox" data-flag="{{ flag.name }}"> {{ flag.name }}
-                    <span class="tooltip">{{ flag.description }}</span>
-                </label>
-            {% endfor %}
-        </div>
-    </div>
-
-    <hr>
-    
-    <div class="container_row">
-        {% if events|length < 1 %}
-            <h4 style="text-align: center;">There is no history saved</h4>
-        {% else %}
-            <table id="events-table">
-                <tr>
-                    <th>Event title</th>
-                    <th>Username</th>
-                    <th>Date</th>
-                    <th>Actions</th>
+<div class="container_row">
+    {% if events|length < 1 %}
+        <h4 style="text-align: center;">There is no history saved</h4>
+    {% else %}
+        <table id="events-table">
+            <tr>
+                <th>Event title</th>
+                <th>Username</th>
+                <th>Date</th>
+                <th>Actions</th>
+            </tr>
+            {% for event in events %}
+                <tr class="event-row" data-flags="{{ event.flag }}">
+                    <td>{% if event.title|length > 150 %}
+                        {{ event.title[:150] + ' ...' }}
+                    {% else %}
+                        {{ event.title }}
+                    {% endif %}</td>
+                    <td>{{ event.user }}</td>
+                    <td>{{ event.date.strftime("%d %B %Y %H:%M") }}</td>
+                    <td>
+                        <a href="/show/event_{{event.id}}">Show</a>
+                        <br>
+                        <a href="/delete/event_{{event.id}}">Delete</a>
+                    </td>
                 </tr>
-                {% for event in events %}
-                    <tr class="event-row" data-flags="{{ event.flag }}">
-                        <td>{% if event.title|length > 150 %}
-                            {{ event.title[:150] + ' ...' }}
-                        {% else %}
-                            {{ event.title }}
-                        {% endif %}</td>
-                        <td>{{ event.user }}</td>
-                        <td>{{ event.date.strftime("%d %B %Y %H:%M") }}</td>
-                        <td>
-                            <a href="/show/event_{{event.id}}">Show</a>
-                            <br>
-                            <a href="/delete/event_{{event.id}}">Delete</a>
-                        </td>
-                    </tr>
-                {% endfor %}
-            </table>
-        {% endif %}
-    </div>
-
+            {% endfor %}
+        </table>
+    {% endif %}
 </div>
 
-<div class="container_column">
-    <button class="accept_button" onclick="window.location='/delete/events'" style="margin-left: 10px;">Clear events</button>
-</div>
 
 <script>
     document.querySelectorAll('.filter-checkbox').forEach(function(checkbox) {

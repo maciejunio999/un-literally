@@ -11,6 +11,7 @@ from collections import defaultdict
 from bokeh.embed import components
 from bokeh.plotting import figure
 from random import choice
+import math
 
 app = Flask(__name__)
 
@@ -565,7 +566,7 @@ def edit_word(id):
 def word_of_literally(id):
     if current_user.role_id != 3:
         word_to_edit = Word.query.get_or_404(id)
-        word_today = Word.query.filter(func.date(Word.last_as_word_of_literally) == datetime.now(POLAND_TZ).date()).all()
+        word_today = Word.query.filter(func.date(Word.last_as_word_of_literally) == datetime.now(POLAND_TZ).date()).first()
         if word_today:
             description = f"Word of the literally has been found for today and it is {word_today.content}"
             log_events(flag='LG!', title='Logic error', description=description)
@@ -871,7 +872,9 @@ def show_event(id):
         return render_template('error_page.html', message=f'You dont have {title}')
 
 
-# menu page
+# Analysis
+
+# history's plots menu page
 @app.route('/history_plots_menu', methods=['GET'])
 @login_required
 def history_plots_menu():

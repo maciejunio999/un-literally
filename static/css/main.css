@@ -62,16 +62,46 @@ th {
 
 .menu_button {
   background-color: #297400;
-  border: none;
   color: white;
-  padding: 10px 50px;
-  text-align: center;
-  text-decoration: none;
-  display: inline-block;
-  font-size: 15px;
-  margin: 7px 0px;
+  border: none;
+  padding: 15px 25px;
+  margin: 10px 0;
+  border-radius: 5px;
+  width: auto;  /* Zmieniamy szerokość na auto */
+  font-size: 16px;
   cursor: pointer;
+  transition: background-color 0.3s ease;
+  display: inline-flex;  /* Dodajemy, by ikona była wewnątrz */
+  align-items: center;   /* Centrujemy ikonę z tekstem */
 }
+
+.menu_button:hover {
+  background-color: #1e5e00;
+}
+
+.menu_button i {
+  margin-right: 10px;
+}
+
+.menu-group {
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.container_column {
+  max-width: 800px;
+  margin: auto;
+  padding: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.container_column hr {
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
 
 .button {
   background-color: #50932c;

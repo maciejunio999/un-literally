@@ -891,6 +891,227 @@ def history_plots_menu():
         return render_template('error_page.html', message=f'You dont have {title}')
 
 
+def get_user_event_count():
+    results = defaultdict(int)
+    events = db.session.query(History.user).all()
+    for event in events:
+        results[event.user] += 1
+    return dict(results)
+
+
+def get_event_count_by_flag():
+    results = defaultdict(int)
+    events = db.session.query(History.flag).all()
+    for event in events:
+        results[event.flag] += 1
+    return dict(results)
+
+
+def get_event_count_by_specific_flag(flags):
+    results = defaultdict(int)
+    events = db.session.query(History.flag).filter(History.flag.in_(flags)).all()
+    for event in events:
+        results[event.flag] += 1
+    return results
+
+
+@app.route('/events_per_user')
+@login_required
+def events_per_user():
+    if current_user.role_id == 1:
+        try:
+            title = 'User Event Counts'
+            user_event_counts = get_user_event_count()
+
+            if not user_event_counts:
+                return render_template('error_page.html', message="No events found for any user.")
+
+            users_sorted = sorted(user_event_counts.keys())
+            event_counts_sorted = [user_event_counts[user] for user in users_sorted]
+
+            plot_sorted_by_name = figure(
+                x_range=users_sorted, 
+                title="Events per User (Alphabetically)",
+                height=400,
+                sizing_mode="stretch_width"
+            )
+            plot_sorted_by_name.vbar(x=users_sorted, top=event_counts_sorted, width=0.5, color="blue", alpha=0.7)
+            plot_sorted_by_name.xaxis.major_label_orientation = math.pi/4
+            plot_sorted_by_name.xaxis.axis_label = "Users"
+            plot_sorted_by_name.yaxis.axis_label = "Event Count"
+
+            script1, div1 = components(plot_sorted_by_name)
+            plot = [script1, div1]
+
+            return render_template('history_charts.html', plot=plot, title=title)
+        except Exception as e:
+            title = 'There was an issue displaying plot'
+            log_events(flag='ER?', title=title, description=e)
+            return render_template('error_page.html', message=title)
+    else:
+        title = 'permission to see analysis module'
+        log_events(flag='ER!', title=f'No {title}', description=None)
+        return render_template('error_page.html', message=f'You dont have {title}')
+
+
+@app.route('/events_per_flag')
+@login_required
+def events_per_flag():
+    if current_user.role_id == 1:
+        try:
+            flag_event_counts = get_event_count_by_flag()
+
+            if not flag_event_counts:
+                return render_template('error_page.html', message="No events found for any flag.")
+
+            sorted_flags = sorted(flag_event_counts.keys())
+            event_counts_sorted = [flag_event_counts[flag] for flag in sorted_flags]
+
+            plot_sorted_by_flag = figure(
+                x_range=sorted_flags, 
+                title="Events per Flag (Alphabetically)",
+                height=400,
+                sizing_mode="stretch_width"
+            )
+            plot_sorted_by_flag.vbar(x=sorted_flags, top=event_counts_sorted, width=0.5, color="blue", alpha=0.7)
+            plot_sorted_by_flag.xaxis.major_label_orientation = math.pi/4
+            plot_sorted_by_flag.xaxis.axis_label = "Flags"
+            plot_sorted_by_flag.yaxis.axis_label = "Event Count"
+
+            script, div = components(plot_sorted_by_flag)
+            plot = [script, div]
+
+            return render_template('history_charts.html', plot=plot, title="Events per Flag")
+
+        except Exception as e:
+                title = 'There was an issue displaying plot'
+                log_events(flag='ER?', title=title, description=e)
+                return render_template('error_page.html', message=title)
+    else:
+        title = 'permission to see analysis module'
+        log_events(flag='ER!', title=f'No {title}', description=None)
+        return render_template('error_page.html', message=f'You dont have {title}')
+
+
+@app.route('/er_flags_bar_chart')
+@login_required
+def er_flags_bar_chart():
+    if current_user.role_id == 1:
+        try:
+            title = 'Event Flags Distribution (ER? and ER!)'
+            er_flags_count = get_event_count_by_specific_flag(['ER?', 'ER!'])
+
+            if not er_flags_count:
+                return render_template('error_page.html', message="No events found with the specified flags.")
+
+            flags = list(er_flags_count.keys())
+            counts = list(er_flags_count.values())
+            
+            colors = ['orange', 'red']
+
+            plot = figure(x_range=flags, title=title, height=400,
+                          sizing_mode="stretch_width")
+
+            plot.vbar(x=flags, top=counts, width=0.5, color=colors, alpha=0.7)
+
+            plot.xaxis.axis_label = "Event Flags"
+            plot.yaxis.axis_label = "Event Count"
+            plot.xaxis.major_label_orientation = math.pi/4
+
+            script, div = components(plot)
+
+            return render_template('history_charts.html', plot=[script, div], title=title)
+
+        except Exception as e:
+            title = 'There was an issue displaying the bar chart'
+            log_events(flag='ER?', title=title, description=str(e))
+            return render_template('error_page.html', message=title)
+
+    else:
+        title = 'permission to see analysis module'
+        log_events(flag='ER!', title=f'No {title}', description=None)
+        return render_template('error_page.html', message=f'You don’t have {title}')
+
+
+@app.route('/cr_flags_bar_chart')
+@login_required
+def cr_flags_bar_chart():
+    if current_user.role_id == 1:
+        try:
+            title = 'Event Flags Distribution (CRP, CRW and CRU)'
+            er_flags_count = get_event_count_by_specific_flag(['CRP', 'CRW', 'CRU'])
+
+            if not er_flags_count:
+                return render_template('error_page.html', message="No events found with the specified flags.")
+
+            flags = list(er_flags_count.keys())
+            counts = list(er_flags_count.values())
+            
+            colors = ['#000000', '#ff0000', '#ffe100']
+
+            plot = figure(x_range=flags, title=title, height=400,
+                          sizing_mode="stretch_width")
+
+            plot.vbar(x=flags, top=counts, width=0.5, color=colors, alpha=0.7)
+
+            plot.xaxis.axis_label = "Event Flags"
+            plot.yaxis.axis_label = "Event Count"
+            plot.xaxis.major_label_orientation = math.pi/4
+
+            script, div = components(plot)
+
+            return render_template('history_charts.html', plot=[script, div], title=title)
+
+        except Exception as e:
+            title = 'There was an issue displaying the bar chart'
+            log_events(flag='ER?', title=title, description=str(e))
+            return render_template('error_page.html', message=title)
+
+    else:
+        title = 'permission to see analysis module'
+        log_events(flag='ER!', title=f'No {title}', description=None)
+        return render_template('error_page.html', message=f'You don’t have {title}')
+
+
+@app.route('/all_edits_by_type')
+@login_required
+def all_edits_by_type():
+    if current_user.role_id == 1:
+        try:
+            title = 'Edition Events Distribution (ETU and ETW)'
+            er_flags_count = get_event_count_by_specific_flag(['ETU', 'ETW'])
+
+            if not er_flags_count:
+                return render_template('error_page.html', message="No events found with the specified flags.")
+
+            flags = list(er_flags_count.keys())
+            counts = list(er_flags_count.values())
+            
+            colors = ['#00f59b', '#7014f2']
+
+            plot = figure(x_range=flags, title=title, height=400,
+                          sizing_mode="stretch_width")
+
+            plot.vbar(x=flags, top=counts, width=0.5, color=colors, alpha=0.7)
+
+            plot.xaxis.axis_label = "Event Flags"
+            plot.yaxis.axis_label = "Event Count"
+            plot.xaxis.major_label_orientation = math.pi/4
+
+            script, div = components(plot)
+
+            return render_template('history_charts.html', plot=[script, div], title=title)
+
+        except Exception as e:
+            title = 'There was an issue displaying the bar chart'
+            log_events(flag='ER?', title=title, description=str(e))
+            return render_template('error_page.html', message=title)
+
+    else:
+        title = 'permission to see analysis module'
+        log_events(flag='ER!', title=f'No {title}', description=None)
+        return render_template('error_page.html', message=f'You don’t have {title}')
+
 ###################################################################################################################################
 #   Analysis module
 ###################################################################################################################################

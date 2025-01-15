@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi" crossorigin="anonymous">
+
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+
+<link href="https://cdn.bokeh.org/bokeh/release/bokeh-3.6.2.min.css" rel="stylesheet" type="text/css">
+<script src="https://cdn.bokeh.org/bokeh/release/bokeh-3.6.2.min.js"></script>
+
+<title>Un-Literally</title>
+
+<style>
+    .content-container {
+        margin: 30px auto;
+        padding: 20px;
+        max-width: 90%;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        background-color: #f9f9f9;
+    }
+
+    .btn-custom {
+        background-color: #297400;
+        color: white;
+        border: none;
+    }
+
+    .btn-custom:hover {
+        background-color: #1e5200;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+
+<div class="name">
+    <h1 style="text-align: center; color: #297400; font-family: Arial; font-weight: bold;">Un-Literally</h1>
+    <h2 style="text-align: center; color: #297400; text-decoration: underline; font-family: Arial; font-weight: bold;">Chart</h2>
+</div>
+
+<div class="content-container">
+    <h2 class="text-center" style="color: #0fa609;">{{ title }}</h2>
+
+    <div class="d-flex justify-content-center mb-3">
+        <button class="btn btn-custom me-2" onclick="togglePlot('plot1', this)">Show plot</button>
+    </div>
+
+    <div id="plot1" class="d-none">
+        <h4 class="text-center">Not sorted plot</h4>
+        {{ plot[1] | safe }}
+        {{ plot[0] | safe }}
+    </div>
+
+</div>
+
+<div class="d-flex justify-content-center mt-4">
+    <button type="button" class="btn btn-custom" onclick="window.location='/history_plots_menu'">Back</button>
+</div>
+
+<div class="container_column">
+    <div class="menu-group">
+        <button class="menu_button" onclick="window.location='/menu'"><i class="fas fa-bars"></i> Menu</button>
+    </div>
+</div>
+
+<script>
+    function togglePlot(plotId, button) {
+        const plot = document.getElementById(plotId);
+
+        if (plot.classList.contains('d-none')) {
+            plot.classList.remove('d-none');
+            button.textContent = 'Hide plot';
+        } else {
+            plot.classList.add('d-none');
+            button.textContent = button.dataset.defaultText;
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        const buttons = document.querySelectorAll(".btn-custom");
+        buttons.forEach(button => {
+            button.dataset.defaultText = button.textContent;
+        });
+    });
+</script>
+
+{% endblock %}

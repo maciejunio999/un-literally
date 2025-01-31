@@ -452,6 +452,11 @@ def delete_user(id):
         return render_template('error_page.html', message=f'You c{title}')
 
 
+@app.get('/edit_account')
+def edit_account():
+    return {"message": "Edit your account details here."}
+
+
 ###################################################################################################################################
 #   Words module
 ###################################################################################################################################

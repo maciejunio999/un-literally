@@ -381,27 +381,13 @@ def update_user(id):
         user_to_update = User.query.get_or_404(id)
         message = f'Updating user named: {user_to_update.username}.'
         if request.method == 'POST':
-            username = request.form['username'].strip()
             role_id = int(request.form['role'].strip())
-            new_password = request.form['password'].strip()
 
             if role_id != user_to_update.role_id:
                 role = Role.query.get_or_404(role_id)
                 message += f' Role changed to {role.name}.'
 
-            if username != user_to_update.username:
-                validate_name = validate_username(username)
-                if validate_name:
-                    session['repited_user'] = True
-                    message += f' Changed name to {username}.'
-                    return render_template('edit_user.html', user=user_to_update, message='[!] This username is already taken.')
-
-            user_to_update.username = username
             user_to_update.role_id = role_id
-            if new_password:
-                new_password_hashed = bcrypt.generate_password_hash(new_password)
-                user_to_update.password = new_password_hashed
-                message += f' Changed password.'
 
             log_events(flag='ETU', title='Edit user', description=message)
             try:
@@ -414,7 +400,7 @@ def update_user(id):
                 log_events(flag='ER?', title=title, description=e)
                 return render_template('error_page.html', message=title)
         else:
-            return render_template('edit_user.html', user=user_to_update)
+            return render_template('update_user.html', user=user_to_update)
     else:
         title = 'permission to edit users'
         log_events(flag='ER!', title=f'No {title}', description=None)
@@ -452,9 +438,40 @@ def delete_user(id):
         return render_template('error_page.html', message=f'You c{title}')
 
 
-@app.get('/edit_account')
+@app.route('/edit_account', methods=['GET', 'POST'])
+@login_required
 def edit_account():
-    return {"message": "Edit your account details here."}
+        user_to_update = User.query.get_or_404(current_user.id)
+        message = f'Updating user named: {user_to_update.username}.'
+        if request.method == 'POST':
+            username = request.form['username'].strip()
+            new_password = request.form['password'].strip()
+
+            if username != user_to_update.username:
+                validate_name = validate_username(username)
+                if validate_name:
+                    session['repited_user'] = True
+                    message += f' Changed name to {username}.'
+                    return render_template('edit_account.html', user=user_to_update, message='[!] This username is already taken.')
+
+            user_to_update.username = username
+            if new_password:
+                new_password_hashed = bcrypt.generate_password_hash(new_password)
+                user_to_update.password = new_password_hashed
+                message += f' Changed password.'
+
+            log_events(flag='ETU', title='Edit user', description=message)
+            try:
+                db.session.commit()
+                session['repited_user'] = False
+                return redirect('/menu')
+            except Exception as e:
+                db.session.rollback()
+                title = 'There was an issues updating user'
+                log_events(flag='ER?', title=title, description=e)
+                return render_template('error_page.html', message=title)
+        else:
+            return render_template('edit_account.html', user=user_to_update)
 
 
 ###################################################################################################################################

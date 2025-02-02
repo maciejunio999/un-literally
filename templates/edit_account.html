@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<title>Un-Literally</title>
+<style>
+    .hidden {
+        display: none;
+    }
+
+    .error-message {
+        color: red;
+        font-size: 14px;
+        margin-left: 25px;
+    }
+    
+    .container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .input-group {
+        margin-bottom: 20px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .label {
+        font-weight: bold;
+        color: #297400;
+    }
+
+    .input-field {
+        padding: 10px;
+        margin-top: 5px;
+        border-radius: 5px;
+        border: 1px solid #ddd;
+        font-size: 16px;
+    }
+
+    .input-field:focus {
+        outline: none;
+        border-color: #297400;
+    }
+
+    .button {
+        background-color: #297400;
+        color: white;
+        border: none;
+        padding: 15px;
+        font-size: 16px;
+        border-radius: 5px;
+        width: 100%;
+        cursor: pointer;
+        margin-top: 20px;
+    }
+
+    .button:hover {
+        background-color: #1e5200;
+    }
+
+</style>
+
+{% endblock %}
+
+{% block body %}
+
+<div class="name">
+    <h1 style="text-align: center; color: #297400; font-family: Arial; font-weight: bold;">Un-Literally</h1>
+    <h2 style="text-align: center; color: #297400; text-decoration: underline; font-family: Arial; font-weight: bold;">Update User</h2>
+</div>
+
+<div class="container">
+    <h4 style="color: #297400; text-align: center;">Logged: {{current_user.username}}</h4>
+
+    <form id="editUserForm" action="/edit_account" method="POST" onsubmit="return validateForm()">
+        <div class="input-group">
+            <label for="username" class="label">Username:</label>
+            <input type="text" name="username" id="username" class="input-field" value="{{user.username}}" required>
+            <span id="usernameError" class="error-message"></span>
+        </div>
+
+        <div class="input-group hidden" id="password-group">
+            <label for="password" class="label hidden" id='password-label'>Password:</label>
+            <input type="password" name="password" id="password-input" minlength="5" class="input-field hidden" placeholder="Enter new password">
+            <span id="passwordError" class="error-message"></span>
+        </div>
+
+        <button type="button" class="button" id="change-password-button" onclick="showPasswordField()">Change Password</button>
+        <button type="submit" class="button">Update User</button>
+    </form>
+
+    {% if session.repited_user %}
+        <p class="error-message">{{ message }}</p>
+    {% endif %}
+
+    <button class="back-button" onclick="window.location='/menu'">Back</button>
+</div>
+
+<script>
+    function showPasswordField() {
+        document.getElementById('password-label').classList.remove('hidden');
+        document.getElementById('password-input').classList.remove('hidden');
+        document.getElementById('change-password-button').classList.add('hidden');
+    }
+
+    function validateForm() {
+        let isValid = true;
+
+        const usernameField = document.getElementById('username').value.trim();
+        const passwordField = document.getElementById('password').value.trim();
+
+        const usernameError = document.getElementById('usernameError');
+        const passwordError = document.getElementById('passwordError');
+
+        usernameError.textContent = '';
+        passwordError.textContent = '';
+
+        if (usernameField === "") {
+            usernameError.textContent = 'Username cannot be empty or whitespace only.';
+            isValid = false;
+        }
+
+        if (document.getElementById('password-group').classList.contains('hidden') === false && passwordField === "") {
+            passwordError.textContent = 'Password cannot be empty or whitespace only.';
+            isValid = false;
+        }
+
+        return isValid;
+    }
+</script>
+
+{% endblock %}

@@ -11,20 +11,20 @@ body, html {
 
 table {
   border-collapse: collapse;
-  width: 80%; /* Adjust the width to make the table not too wide */
-  margin: auto; /* Center the table within its container */
+  width: 80%;
+  margin: auto;
   border: 1px solid #5d1c75;
 }
 
 th, td {
   padding: 10px;
   text-align: center;
-  border: 1px solid #5d1c75; /* Keep table borders visible */
+  border: 1px solid #5d1c75;
 }
 
 th {
-  background-color: #e0e0e0; /* Light grey to match previous header style */
-  color: #297400; /* Green color for the header text */
+  background-color: #e0e0e0;
+  color: #297400;
 }
 
 .form {
@@ -67,12 +67,12 @@ th {
   padding: 15px 25px;
   margin: 10px 0;
   border-radius: 5px;
-  width: auto;  /* Zmieniamy szerokość na auto */
+  width: auto;
   font-size: 16px;
   cursor: pointer;
   transition: background-color 0.3s ease;
-  display: inline-flex;  /* Dodajemy, by ikona była wewnątrz */
-  align-items: center;   /* Centrujemy ikonę z tekstem */
+  display: inline-flex;
+  align-items: center;
 }
 
 .menu_button:hover {
@@ -130,6 +130,21 @@ th {
   font-size: 15px;
   margin: 7px 0px 0px 0px;
   cursor: pointer;
+}
+
+.back-button {
+  background-color: #2d5319;
+  color: white;
+  padding: 12px;
+  font-size: 16px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  width: 100%;
+}
+
+.back-button:hover {
+  background-color: #297400;
 }
 
 .login_button {

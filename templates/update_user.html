@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<title>Un-Literally</title>
+<style>
+    .hidden {
+        display: none;
+    }
+    .error-message {
+        color: red;
+        font-size: 14px;
+        margin-left: 25px;
+    }
+
+    .input-group {
+        margin-bottom: 20px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .label {
+        font-weight: bold;
+        color: #297400;
+    }
+
+    .input-field {
+        padding: 10px;
+        margin-top: 5px;
+        border-radius: 5px;
+        border: 1px solid #ddd;
+        font-size: 16px;
+    }
+
+    .input-field:focus {
+        outline: none;
+        border-color: #297400;
+    }
+
+    .button {
+        background-color: #297400;
+        color: white;
+        border: none;
+        padding: 15px;
+        font-size: 16px;
+        border-radius: 5px;
+        width: 100%;
+        cursor: pointer;
+        margin-top: 20px;
+    }
+
+    .button:hover {
+        background-color: #1e5200;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+
+<div class="name">
+    <h1 style="text-align: center; color: #297400; font-family: Arial; font-weight: bold;">Un-Literally</h1>
+    <h2 style="text-align: center; color: #297400; text-decoration: underline; font-family: Arial; font-weight: bold;">Update User</h2>
+</div>
+
+<hr>
+<div class="name">
+
+    <form id="editUserForm" action="/update/user_{{user.id}}" method="POST">
+        <h4 class="label">User: {{user.username}}</h4>
+        <div class="input-group">
+            <label for="role" class="label">Role:</label>
+            <select name="role" id="role" class="input-field">
+                <option value="1" {% if user.role_id == 1 %}selected{% endif %}>Admin</option>
+                <option value="2" {% if user.role_id == 2 %}selected{% endif %}>ProUser</option>
+                <option value="3" {% if user.role_id == 3 %}selected{% endif %}>PlainUser</option>
+            </select>
+        </div>
+        <br>
+        <button type="submit"class="button">Update User</button>
+    </form>
+    <br>
+    <button class="back-button" onclick="window.location='/all_users'">Back</button>
+</div>
+
+{% endblock %}

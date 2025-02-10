@@ -2,6 +2,7 @@
 
 {% block head %}
 <title>Un-Literally</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 <style>
     .label-top-align {
         vertical-align: top;
@@ -135,7 +136,41 @@
     <button type="button" class="back_button" onclick="window.location='/menu'">Back</button>
 </div>
 
+<div class="user-dropdown-container">
+    <button class="user-icon" onclick="toggleDropdown()">
+        <i class="fas fa-user"></i>
+    </button>
+
+    <div id="user-dropdown" class="user-dropdown">
+        <button onclick="window.location='/edit_account'">
+            <i class="fas fa-user-edit"></i> Edit Account
+        </button>
+        <button onclick="window.location='/logout'">
+            <i class="fas fa-sign-out-alt"></i> Log out
+        </button>
+    </div>
+</div>
+
+
 <script>
+    document.getElementById("content").addEventListener("input", function () {
+        const input = this.value.trim();
+        const errorSpan = document.getElementById("wordError");
+
+        if (input.length !== 5) {
+            errorSpan.textContent = "Word must be exactly 5 characters.";
+            errorSpan.style.display = "block";
+        } else {
+            errorSpan.textContent = "";
+            errorSpan.style.display = "none";
+        }
+    });
+    
+    function toggleDropdown() {
+        const dropdown = document.getElementById('user-dropdown');
+        dropdown.classList.toggle('show');
+    }
+
     function toggleField(fieldId) {
         const field = document.getElementById(fieldId);
         const inputs = field.querySelectorAll('input[type="text"]');
@@ -143,15 +178,13 @@
         if (field.style.display === "none") {
             field.style.display = "block";
 
-            // Add 'required' attribute to the inputs in the shown container
             inputs.forEach(input => {
-                input.disabled = false; // Enable inputs
+                input.disabled = false;
                 input.setAttribute('required', 'required');
             });
 
         } else {
             field.style.display = "none";
-            // Remove 'required' attribute from the inputs when the container is hidden
             inputs.forEach(input => {
                 input.removeAttribute('required');
             });
@@ -162,16 +195,14 @@
         const field = document.getElementById(fieldId);
         const inputs = field.querySelectorAll('input[type="text"]');
 
-        // Clear input fields when the container is closed
         inputs.forEach(input => {
             input.value = "";
             input.disabled = true;
-            input.removeAttribute('required'); // Remove 'required' attribute
+            input.removeAttribute('required');
         });
         field.style.display = "none";
     }
 
-    // Add event listeners to manage focus and unlocking next fields
     document.addEventListener('DOMContentLoaded', function () {
         const inputFields = [
             document.getElementById('exactPlaceFilter1'),
@@ -184,14 +215,14 @@
         inputFields.forEach((field, index) => {
             field.addEventListener('input', function () {
                 if (field.value.length === 1 && index < inputFields.length - 1) {
-                    inputFields[index + 1].disabled = false; // Enable next field
-                    inputFields[index + 1].focus(); // Move focus to next field
+                    inputFields[index + 1].disabled = false;
+                    inputFields[index + 1].focus();
                 }
             });
 
             field.addEventListener('keydown', function (event) {
                 if (event.key === 'Backspace' && field.value.length === 0 && index > 0) {
-                    inputFields[index - 1].focus(); // Move focus to previous field on backspace
+                    inputFields[index - 1].focus();
                 }
             });
         });

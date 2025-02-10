@@ -4,29 +4,6 @@
     <title>Un-Literally</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: #ffffff;
-        }
-
-        .menu_header h1 {
-            color: #297400;
-            font-weight: bold;
-            font-size: 36px;
-            margin-bottom: 10px;
-            text-align: center;
-        }
-
-        .menu_header h2 {
-            color: #297400;
-            font-weight: bold;
-            font-size: 28px;
-            margin-bottom: 20px;
-            text-decoration: underline;
-            text-align: center;
-        }
-
         .container_column {
             max-width: 800px;
             margin: auto;
@@ -94,12 +71,6 @@
             font-weight: bold;
         }
 
-        .menu-header {
-            font-size: 18px;
-            font-weight: bold;
-            color: #297400;
-        }
-
         @media (max-width: 600px) {
             .menu-button {
                 width: 120px;
@@ -114,10 +85,10 @@
 {% endblock %}
 
 {% block body %}
-    <div class="menu_header">
-        <h1>Un-Literally</h1>
-        <h2>Bubble schemas menu</h2>
-    </div>
+<div class="name">
+    <h1 style="text-align: center; color: #297400; font-family: Arial; font-weight: bold;">Un-Literally</h1>
+    <h2 style="text-align: center; color: #297400; text-decoration: underline; font-family: Arial; font-weight: bold;">Bubble schemas menu</h2>
+</div>
 
     <div class="container_column">
         <div class="menu-button-container">
@@ -139,7 +110,26 @@
         <button type="button" class="back_button" onclick="window.location='/menu'">Back</button>
     </div>
 
-    <button class="logout-button" onclick="window.location='/logout'">
-        <i class="fas fa-sign-out-alt"></i> Log out
-    </button>
+    <div class="user-dropdown-container">
+        <button class="user-icon" onclick="toggleDropdown()">
+            <i class="fas fa-user"></i>
+        </button>
+
+        <div id="user-dropdown" class="user-dropdown">
+            <button onclick="window.location='/edit_account'">
+                <i class="fas fa-user-edit"></i> Edit Account
+            </button>
+            <button onclick="window.location='/logout'">
+                <i class="fas fa-sign-out-alt"></i> Log out
+            </button>
+        </div>
+    </div>
+
+    <script>
+        function toggleDropdown() {
+            const dropdown = document.getElementById('user-dropdown');
+            dropdown.classList.toggle('show');
+        }
+    </script>
+    
 {% endblock %}

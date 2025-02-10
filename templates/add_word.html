@@ -1,64 +1,102 @@
 {% extends 'base.html' %}
 
 {% block head %}
-<title>Un-Literally</title>
+<title>Un-literally</title>
+
 <style>
-    .label-top-align {
-        vertical-align: top;
-        display: inline-block;
-        margin-top: 7px;
+    input[type="text"],
+    textarea {
+        width: 100%;
+        max-width: 100%;
+        padding: 15px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 18px;
+        box-sizing: border-box;
+        margin-top: 5px;
+        background: #f9f9f9;
+    }
+
+    input[type="text"]:focus,
+    textarea:focus {
+        border-color: #297400;
+        outline: none;
     }
 </style>
+
 {% endblock %}
 
 {% block body %}
 
 <div class="name">
     <h1 style="text-align: center; color: #297400; font-family: Arial; font-weight: bold;">Un-Literally</h1>
-    <h2 style="text-align: center; color: #297400; text-decoration: underline; font-family: Arial; font-weight: bold;">Add new word</h2>
+    <h2 style="text-align: center; color: #297400; text-decoration: underline; font-family: Arial; font-weight: bold;">Add Word</h2>
 </div>
 
-<div>
-    <hr>
+<div class="container_column">
+
     <form action="/add_word" method="POST">
-        <div class="container_column">
-            <label for="content" class="label-top-align">Word:</label>
-            <input type="text" name="content" id="content" class="login_input" placeholder="Content... " required>
-            <br><br>
+        <div class="info_block">
+            <p class="info_label">Word:</p>
+            <input
+                type="text"
+                name="content"
+                id="content"
+                placeholder="Enter a 5-letter word..."
+                maxlength="5"
+                required
+            />
+            <span id="wordError" class="error-message"></span>
+        </div>
+
+        <div class="info_block">
             {% if session.role == 1 %}
-                <label for="definition" class="label-top-align">Word's definition:</label>
-                <textarea id="definition" name="definition" rows="5" cols="50" maxlength="500" wrap="soft" placeholder="Definition..." class="text-area" style="resize: none;"></textarea>
+                <label for="definition" class="info_label">Word's Definition:</label>
+                <textarea
+                    id="definition"
+                    name="definition"
+                    rows="10"
+                    placeholder="Provide a definition..."
+                    class="description_area"
+                    maxlength="500"
+                ></textarea>
             {% else %}
-                <label for="definition" class="label-top-align">Reasoning behind proposal:</label>
-                <textarea id="definition" name="definition" rows="5" cols="50" maxlength="500" wrap="soft" placeholder="Explanation..." class="text-area" style="resize: none;"></textarea>
+                <label for="definition" class="info_label">Reasoning Behind Proposal:</label>
+                <textarea
+                    id="definition"
+                    name="definition"
+                    rows="10"
+                    placeholder="Explain your reasoning..."
+                    class="description_area"
+                    maxlength="500"
+                ></textarea>
             {% endif %}
-            <br><br>
-            <div class="button-container">
-                <input type="submit" value="Add" class="button accept_button button-large">
+        </div>
+
+        {% if session.word_already_exists %}
+            <div class="error-message">
+                Word already exists or is pending approval.
             </div>
+        {% endif %}
+
+        <div class="button-container">
+            <button type="submit" class="accept_button">Add</button>
+            <button type="button" class="back_button_v2" onclick="window.location='/menu'">Back</button>
         </div>
     </form>
-    
-    <div class="item" style="flex-grow: 2;">
-        {% if session.word_already_exists %}
-            <p style="color: red;">Word already exists or already was proposed and waits for acceptation.</p>
-        {% endif %}
-    </div>
-
-    <div class="container_column">
-        <button class="back_button" onclick="window.location='/menu'">Back</button>
-    </div>
-
-    <hr>
 </div>
 
 <script>
-    document.getElementById('content').addEventListener('input', function() {
-        const input = this.value;
+    document.getElementById("content").addEventListener("input", function () {
+        const input = this.value.trim();
+        const errorSpan = document.getElementById("wordError");
+
         if (input.length !== 5) {
-            this.setCustomValidity('Word has to have exaclty 5 characters.');
+            errorSpan.textContent = "Word must be exactly 5 characters.";
+            errorSpan.style.display = "block";
         } else {
-            this.setCustomValidity('');
+            errorSpan.textContent = "";
+            errorSpan.style.display = "none";
         }
     });
 </script>

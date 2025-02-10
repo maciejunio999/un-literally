@@ -307,12 +307,14 @@ input[type="submit"] {
 }
 
 .info_block {
-  background-color: #f0f0f0; /* Light gray background for each info block */
+  background-color: #f0f0f0;
   padding: 15px;
   border-radius: 10px;
-  margin-bottom: 20px; /* Spacing between info blocks */
-  width: 100%; /* Full width of the container */
-  box-sizing: border-box; /* Make sure padding doesn't exceed container width */
+  width: 100%;
+  box-sizing: border-box;
+  max-width: 700px;
+  margin-bottom: 30px;
+  position: relative;
 }
 
 .info_label {
@@ -325,6 +327,16 @@ input[type="submit"] {
 .info_value {
   font-size: 17px;
   margin-left: 10px;
+}
+
+.info_block .error-message {
+  color: red;
+  font-size: 14px;
+  margin-top: 10px;
+  position: absolute;
+  bottom: -20px;
+  left: 0;
+  display: block;
 }
 
 .description_area {

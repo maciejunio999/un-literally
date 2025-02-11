@@ -186,7 +186,7 @@ def log_events(flag, title, description):
 
 
 ###################################################################################################################################
-#   Wrod of the day
+#   Word of the day
 ###################################################################################################################################
 
 @app.route('/see_word_of_the_day', methods=['GET'])
@@ -196,13 +196,25 @@ def see_word_of_the_day():
         call_for_word_of_the_day()
         today = datetime.now(POLAND_TZ).date()
         word_to_show = db.session.query(Word).filter(Word.last_as_word_of_the_day != None).order_by(Word.last_as_word_of_the_day.desc()).first()
+        
         if today != word_to_show.last_as_word_of_the_day.date():
-            return True
+            title = 'There was an issue while looking for word of the day'
+            log_events(flag='ER?', title=title, description=e)
+            return render_template('error_page.html', message=title)
         else:
             todays_last_as_word_of_literally = False
             previous_page = 'word_of_the_day'
             title = 'Word of the day!'
-            return render_template('show_word.html', word=word_to_show, previous_page=previous_page, todays_last_as_word_of_literally=todays_last_as_word_of_literally, title=title)
+            word_to_show.searched += 1
+            try:
+                db.session.commit()
+                log_events(flag='SRC', title=f'Searched for word with {word_to_show.content}', description=None)
+                return render_template('show_word.html', word=word_to_show, previous_page=previous_page, todays_last_as_word_of_literally=todays_last_as_word_of_literally, title=title)
+            except Exception as e:
+                db.session.rollback()
+                title = f'There was an issue looking up for word: {word_to_show.content}'
+                log_events(flag='ER?', title=title, description=e)
+                return render_template('error_page.html', message=title)
     except Exception as e:
         title = 'There was an issue while looking for word of the day'
         log_events(flag='ER?', title=title, description=e)

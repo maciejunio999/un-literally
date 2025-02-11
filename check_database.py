@@ -15,6 +15,7 @@ def check_users():
             print("username: ", user.username)
             print("role: ", user.role_id)
             print("password: ", user.password)
+            print("notifications: ", user.notifications)
             print("="*20)
 
 # FUNCTION TO CHECK FEW WORDS IN DB

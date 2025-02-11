@@ -46,6 +46,7 @@ class User(db.Model, UserMixin):
     username = db.Column(db.String(50), nullable=False, unique=True)
     password = db.Column(db.String(100), nullable=False)
     role_id = db.Column(db.Integer, db.ForeignKey('role.id'))
+    notifications = db.relationship('NotificationToUser', backref='user')
 
 class Role(db.Model):
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
@@ -97,6 +98,16 @@ class Flags(db.Model):
     description = db.Column(db.String(5000), nullable=False)
     events = db.relationship('History', backref='flags')
 
+class NotificationToUser(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    notifications_ids = db.Column(db.String(5000), nullable=True)
+
+class Notifications(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(5000), nullable=False)
+    description = db.Column(db.String(5000), nullable=True)
+    back_reference = db.Column(db.String(5000), nullable=True)
 
 ###################################################################################################################################
 #   Validators

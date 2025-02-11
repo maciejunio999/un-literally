@@ -1,4 +1,4 @@
-from app import app, db, User, Word, Role, Proposal, History, Flags
+from app import app, db, User, Word, Role, Proposal, History, Flags, NotificationToUser, Notifications
 
 # DECORATORS
 def decorator(func):
@@ -82,9 +82,32 @@ def check_event_flags():
             print('description: ', event_flag.description)
             print("="*20)
 
-#check_users()
+# FUNCTION TO CHECK NOTIFICATIONS TO USERS IN DB
+@decorator
+def check_notification_to_user():
+    with app.app_context():
+        for notification_to_user in db.session.query(NotificationToUser):
+            print('id: ', notification_to_user.id)
+            print('user_id: ', notification_to_user.user_id)
+            print('notifications_ids: ', notification_to_user.notifications_ids)
+            print("="*20)
+
+# FUNCTION TO CHECK NOTIFICATIONS IN DB
+@decorator
+def check_notifications():
+    with app.app_context():
+        for notification in db.session.query(Notifications):
+            print('id: ', notification.id)
+            print('title: ', notification.title)
+            print('description: ', notification.description)
+            print('back_reference: ', notification.back_reference)
+            print("="*20)
+
+check_users()
 #check_words()
 #check_roles()
 #check_proposals()
 #check_proposals()
-check_event_flags()
+#check_event_flags()
+#check_notification_to_user()
+#check_notifications()

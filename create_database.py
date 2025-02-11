@@ -1,5 +1,5 @@
 from app import app
-from app import db, User, Word, Role, Flags, bcrypt
+from app import db, User, Word, Role, Flags, NotificationToUser, Notifications, bcrypt
 import os
 import time
 import math
@@ -115,7 +115,37 @@ def add_event_types():
         logging.error(traceback.format_exc())
         return False
 
+# ADD NOTIFICATIONS TO USERS
+@decorator
+def add_notification_to_user():
+    try:
+        with app.app_context():
+            session = db.session
+            notification_to_user = NotificationToUser(user_id=1,notifications_ids='1')
+            session.add(notification_to_user)
+            session.commit()
+        return True
+    except Exception as e:
+        logging.error(traceback.format_exc())
+        return False
+
+# ADD NOTIFICATIONS
+@decorator
+def add_notifications():
+    try:
+        with app.app_context():
+            session = db.session
+            notification = Notifications(title='TEST notification', description='TEST notification description', back_reference='/menu')
+            session.add(notification)
+            session.commit()
+        return True
+    except Exception as e:
+        logging.error(traceback.format_exc())
+        return False
+
 create_database()
 add_words()
 add_roles()
 add_event_types()
+add_notification_to_user()
+add_notifications()
